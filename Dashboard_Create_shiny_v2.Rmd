@@ -1,0 +1,678 @@
+---
+title: "My Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    logo: image_logo.png
+    self_contained: true
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(ggpmisc)
+library(DT)
+library(leaflet)
+library(shiny)
+
+# Import csv processed data-set
+
+join_df_ab_genus <-read.csv("processed_data/join_df_ab_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_ab_family <-read.csv("processed_data/join_df_ab_family.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_rich <-read.csv("processed_data/join_df_rich.csv", header = TRUE, stringsAsFactors = FALSE)
+richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_family <-read.csv("processed_data/abundance_df_family.csv", header = TRUE, stringsAsFactors = FALSE)
+
+
+```
+
+
+
+
+Scatter Plot
+=======================================================================
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+selectInput("taxon_var_1", 
+            label= "Choose taxonomic rank:",
+            choices = c("Family","Genus"),
+            selected = "Genus")
+
+# dynamic input
+uiOutput("dynamic_input_1")
+
+#static input
+selectInput("state_var_1", 
+            label= "Choose State:",
+            choices = c("NS","NT","QD","SA","TC","VC","WA"),
+            selected = "QD",
+            multiple = TRUE)
+
+selectInput("env_var_1", 
+            label= "Choose environmental variable:",
+            choices = c("precipitationAnnualMean_millimetre",
+                            "solarRadiationMean_megajoulePerSquareMetre",
+                            "maximumTemperature_degreeCelsius",
+                            "minimumTemperature_degreeCelsius",
+                            "temperatureAnnualMean_degreeCelsius",
+                        "average_soil_pH_unitless",
+                        "average_soil_EC_dSPerMetre"),
+            selected = "precipitationAnnualMean_millimetre")
+```
+
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+```{r}
+output$dynamic_input_1 <- renderUI({
+
+  switch(
+    input$taxon_var_1,
+
+    "Genus" = {
+      selectInput("genus_var_1", 
+            label= "Choose Genus:",
+            choices = c("Acacia",
+                        "Eucalyptus",
+                        "Melaleuca",
+                        "Poaceae",
+                        "Chenopodium",
+                        "Corymbia",
+                        "Xanthorrhoea",
+                        "Melaleuca"),
+            selected = c("Acacia","Eucalyptus"),
+            multiple = TRUE)
+    },
+
+    "Family" = {
+      selectInput("family_var_1", 
+            label= "Choose Family:",
+            choices = c("Amaranthaceae",
+                        "Asteraceae",
+                        "Boraginaceae",
+                        "Brassicaceae",
+                        "Chenopodium",
+                        "Chenopodiaceae",
+                        "Fabaceae",
+                        "Malvaceae",
+                        "Proteaceae",
+                        "Scrophulariaceae"),
+            selected = c("Amaranthaceae","Malvaceae"),
+            multiple = TRUE)
+    }
+
+  )
+
+})
+```
+
+
+
+### Taxon Abundance 
+
+```{r}
+renderPlot({
+  
+  switch(input$taxon_var_1,
+         "Genus"={
+           join_df_ab_genus %>%
+            filter(stateCode %in% input$state_var_1&
+              taxonGenus %in% input$genus_var_1) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "taxonGenus")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonGenus),
+                         formula = y ~ x,
+                         parse = TRUE)
+         },
+         
+         "Family"={
+           join_df_ab_family %>%
+            filter(stateCode %in% input$state_var_1&
+              taxonFamily %in% input$family_var_1) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "taxonFamily")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonFamily),
+                         formula = y ~ x,
+                         parse = TRUE)
+         }
+         )
+  
+  
+})
+
+
+
+```
+
+### Species Richness 
+
+
+```{r}
+renderPlot({
+  join_df_rich %>%
+  filter(stateCode %in% input$state_var_1) %>%
+  ggplot(aes_string(x =input$env_var_1, 
+             y = "unique_species_count")) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x,
+               parse = TRUE,
+               label.x = 5,
+               label.y = 15)
+})
+
+```
+
+
+
+
+Violin Box plot
+=======================================================================
+
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+selectInput("taxon_var_2", 
+            label= "Choose taxonomic rank:",
+            choices = c("Family","Genus"),
+            selected = "Genus")
+
+# dynamic input
+uiOutput("dynamic_input_2")
+
+#static input
+
+selectInput("state_var_2", 
+            label= "Choose State:",
+            choices = c("NS","NT","QD","SA","TC","VC","WA"),
+            selected = "QD",
+            multiple = TRUE)
+
+selectInput("soil_var_2", 
+            label= "Choose soil texture Grade:",
+            choices = c("Clay loam",
+                        "Clay loam sandy ",
+                        "Clayey sand",
+                        "Clayey sand& Loamy sand",
+                        "Clayey sand& Sandy clay loam",
+                        "Clayey sand& Sandy loam",
+                        "Heavy clay",
+                        "Light clay",
+                        "Light medium clay",
+                        "Loam",
+                        "Loamy sand",
+                        "Loamy sand& Sand",
+                        "Medium clay",
+                        "Medium heavy clay",
+                        "Sand",
+                        "Sandy clay loam",
+                        "Sandy loam"),
+            selected = "Sand",
+            multiple = TRUE)
+```
+
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+
+```{r}
+output$dynamic_input_2 <- renderUI({
+
+  switch(
+    input$taxon_var_2,
+
+    "Genus" = {
+      selectInput("genus_var_2", 
+            label= "Choose Genus:",
+            choices = c("Acacia",
+                        "Eucalyptus",
+                        "Melaleuca",
+                        "Poaceae",
+                        "Chenopodium",
+                        "Corymbia",
+                        "Xanthorrhoea",
+                        "Melaleuca"),
+            selected = "Acacia")
+    },
+
+    "Family" = {
+      selectInput("family_var_2", 
+            label= "Choose Family:",
+            choices = c("Amaranthaceae",
+                        "Asteraceae",
+                        "Boraginaceae",
+                        "Brassicaceae",
+                        "Chenopodium",
+                        "Chenopodiaceae",
+                        "Fabaceae",
+                        "Malvaceae",
+                        "Proteaceae",
+                        "Scrophulariaceae"),
+            selected = "Amaranthaceae")
+    }
+
+  )
+
+})
+```
+
+
+
+### Taxon Abundance vs. soil texture
+
+```{r}
+renderPlot({
+  switch(input$taxon_var_2,
+         "Genus"={
+    join_df_ab_genus %>%
+    filter(stateCode %in% input$state_var_2&
+           soil_texture_Grade %in% input$soil_var_2 &
+           taxonGenus %in% input$genus_var_2)%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = taxonGenus)) +
+    geom_violin(fill = "lightgray") +
+    geom_boxplot(width = 0.1,outlier.colour = "red")
+  },
+  "Family"={
+    join_df_ab_family %>%
+    filter(stateCode %in% input$state_var_2&
+           soil_texture_Grade %in% input$soil_var_2 &
+           taxonFamily %in% input$family_var_2)%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = taxonFamily)) +
+    geom_violin(fill = "lightgray") +
+    geom_boxplot(width = 0.1,outlier.colour = "red")
+    
+  })
+     
+})
+
+```
+
+
+### Taxon Abundance vs. climate
+
+```{r}
+renderPlot({
+  switch (input$taxon_var_2,
+    "Genus" = {
+        join_df_ab_genus %>%
+        filter(stateCode %in% input$state_var_2&
+          !is.na(climaticCondition) &
+               taxonGenus %in% input$genus_var_2)%>%
+        ggplot(aes(x = climaticCondition, 
+                   y = abundance,
+                    color = taxonGenus)) +
+        geom_violin(fill = "lightgray") +
+        geom_boxplot(width = 0.1,outlier.colour = "red")
+      
+    },
+    "Family"={
+        join_df_ab_family %>%
+        filter(stateCode %in% input$state_var_2&
+          !is.na(climaticCondition) &
+               taxonFamily %in% input$family_var_2)%>%
+        ggplot(aes(x = climaticCondition, 
+                   y = abundance,
+                    color = taxonFamily)) +
+        geom_violin(fill = "lightgray") +
+        geom_boxplot(width = 0.1,outlier.colour = "red")
+      
+    }
+  )
+  
+  
+
+})
+
+```
+
+
+### Species Richness vs. soil texture
+
+```{r}
+renderPlot({
+  join_df_rich %>%
+  filter(stateCode %in% input$state_var_2&
+           soil_texture_Grade %in% input$soil_var_2)%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+})
+
+```
+
+
+### Species Richness vs. climate
+
+```{r}
+renderPlot({
+  join_df_rich %>%
+  filter(stateCode %in% input$state_var_2&
+           !is.na(climaticCondition))%>%
+  ggplot(aes(x = climaticCondition, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+})
+
+```
+
+
+
+
+Interactive Map
+=======================================================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+selectInput("taxon_var_3", 
+            label= "Choose taxonomic rank:",
+            choices = c("Family","Genus"),
+            selected = "Genus")
+
+# dynamic input
+uiOutput("dynamic_input_3")
+
+#static input
+selectInput("state_var_3", 
+            label= "Choose State:",
+            choices = c("NS","NT","QD","SA","TC","VC","WA"),
+            selected = "QD",
+            multiple = TRUE)
+
+
+```
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+
+```{r}
+output$dynamic_input_3 <- renderUI({
+
+  switch(
+    input$taxon_var_3,
+
+    "Genus" = tagList(
+      selectInput("genus_var_3", 
+            label= "Choose Genus to show abundance map:",
+            choices = c("Acacia",
+                        "Eucalyptus",
+                        "Melaleuca",
+                        "Poaceae",
+                        "Chenopodium",
+                        "Corymbia",
+                        "Xanthorrhoea",
+                        "Melaleuca"),
+            selected = "Acacia"),
+      
+      selectInput("genus_var_mult_3", 
+            label= "Choose Multiple Genera to show distribution map:",
+            choices = c("Acacia",
+                        "Eucalyptus",
+                        "Melaleuca",
+                        "Poaceae",
+                        "Chenopodium",
+                        "Corymbia",
+                        "Xanthorrhoea",
+                        "Melaleuca"),
+            selected = c("Acacia","Eucalyptus"),
+            multiple = TRUE)
+    ),
+      
+
+    "Family" = tagList(
+      selectInput("family_var_3", 
+            label= "Choose Family to show abundance map:",
+            choices = c("Amaranthaceae",
+                        "Asteraceae",
+                        "Boraginaceae",
+                        "Brassicaceae",
+                        "Chenopodium",
+                        "Chenopodiaceae",
+                        "Fabaceae",
+                        "Malvaceae",
+                        "Proteaceae",
+                        "Scrophulariaceae"),
+            selected = "Scrophulariaceae"),
+       
+      selectInput("family_var_mult_3", 
+            label= "Choose Multiple Families to show distribution map:",
+            choices = c("Amaranthaceae",
+                        "Asteraceae",
+                        "Boraginaceae",
+                        "Brassicaceae",
+                        "Chenopodium",
+                        "Chenopodiaceae",
+                        "Fabaceae",
+                        "Malvaceae",
+                        "Proteaceae",
+                        "Scrophulariaceae"),
+            selected = c("Amaranthaceae","Malvaceae"),
+            multiple = TRUE)
+      
+    )
+  
+  )
+})
+```
+
+
+
+### Species Richness Map
+
+```{r}
+renderLeaflet({
+  pal <- colorNumeric(
+  palette = "Reds",   # light → dark
+  domain = richness_df$unique_species_count
+)
+
+richness_df %>%
+  filter(stateCode %in% input$state_var_3&
+           !is.na(unique_species_count))%>%
+  leaflet() %>%
+      addTiles() %>%
+      addCircleMarkers(
+        lng = ~longitude_Degree,
+        lat = ~latitude_Degree,
+        color = "black",
+        weight = 1,
+        fillColor = ~pal(unique_species_count),
+        fillOpacity = 0.8,
+        radius = 3
+      ) %>%
+      addLegend(
+        "bottomright",
+        pal = pal,
+        values = ~unique_species_count,
+        title = "Species Richness(unique count)",
+        opacity = 1)
+})
+
+
+
+
+
+```
+
+
+### Taxon Abundance Map
+
+```{r}
+renderLeaflet({
+  
+  switch(
+    input$taxon_var_3,
+
+    "Genus" = {
+        abundance_df_genus %>%
+        filter(stateCode %in% input$state_var_3&
+          taxonGenus %in% input$genus_var_3) %>%
+        {
+          pal <- colorNumeric(
+            palette = "Reds",
+            domain = .$abundance   # only filtered categories
+          )
+          leaflet(.) %>%
+            addTiles() %>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = 3,
+              fillColor = ~pal(abundance),
+              color = "black",
+              weight = 1,
+              fillOpacity = 0.8
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~abundance,
+                title = "Genus Abundance",
+              opacity = 1
+            )
+      }
+      
+    },
+
+    "Family" = {
+      abundance_df_family %>%
+        filter(stateCode %in% input$state_var_3&
+          taxonFamily %in% input$family_var_3) %>%
+        {
+          pal <- colorNumeric(
+            palette = "Reds",
+            domain = .$abundance   # only filtered categories
+          )
+          leaflet(.) %>%
+            addTiles() %>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = 3,
+              fillColor = ~pal(abundance),
+              color = "black",
+              weight = 1,
+              fillOpacity = 0.8
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~abundance,
+                title = "Family Abundance",
+              opacity = 1
+            )
+      }
+    }
+
+  )
+  
+  
+  
+  
+})
+
+
+
+```
+
+### Taxon distribution Map
+
+```{r}
+renderLeaflet({
+  
+  switch(
+    input$taxon_var_3,
+
+    "Genus" = {
+      abundance_df_genus %>%
+      filter(stateCode %in% input$state_var_3&
+        taxonGenus %in% input$genus_var_mult_3) %>%
+      {
+        pal <- colorFactor(
+          palette = "Set1",
+          domain = .$taxonGenus   # only filtered categories
+        )
+        leaflet(.) %>%
+          addTiles() %>%
+          addCircles(
+            lng = ~longitude_Degree,
+            lat = ~latitude_Degree,
+            radius = 2,
+            color = ~pal(taxonGenus),
+            fillOpacity = 0.5
+          )%>%
+          addLegend(
+              "bottomright",
+              pal = pal,
+              values = ~taxonGenus,
+              title = "Genus"
+          )
+    }
+      
+    },
+
+    "Family" = {
+            abundance_df_family %>%
+            filter(stateCode %in% input$state_var_3&
+              taxonFamily %in% input$family_var_mult_3) %>%
+            {
+              pal <- colorFactor(
+                palette = "Set1",
+                domain = .$taxonFamily   # only filtered categories
+              )
+              leaflet(.) %>%
+                addTiles() %>%
+                addCircles(
+                  lng = ~longitude_Degree,
+                  lat = ~latitude_Degree,
+                  radius = 2,
+                  color = ~pal(taxonFamily),
+                  fillOpacity = 0.5
+                )%>%
+                addLegend(
+                    "bottomright",
+                    pal = pal,
+                    values = ~taxonFamily,
+                    title = "Family"
+                )
+          }
+    }
+
+  )
+  
+  
+  
+})
+
+
+
+```
+

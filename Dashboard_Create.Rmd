@@ -1,0 +1,227 @@
+---
+title: "My Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    logo: image_logo.png
+    self_contained: true
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(ggpmisc)
+library(DT)
+library(leaflet)
+
+# Import csv processed data-set
+
+join_df_ab_genus <-read.csv("processed_data/join_df_ab_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_rich <-read.csv("processed_data/join_df_rich.csv", header = TRUE, stringsAsFactors = FALSE)
+richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+
+
+```
+
+Scatter Plot
+=======================================================================
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Genus Abundance 
+
+```{r}
+join_df_ab_genus %>%
+  filter(taxonGenus %in% c("Acacia", "Eucalyptus")) %>%
+  ggplot(aes(x = average_soil_pH_unitless, 
+             y = abundance,
+              color = taxonGenus)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonGenus),
+               formula = y ~ x,
+               parse = TRUE)
+
+```
+
+### Species Richness 
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = precipitationAnnualMean_millimetre, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x,
+               parse = TRUE,
+               label.x = 5,
+               label.y = 15)
+
+```
+
+
+Violin Box plot
+=======================================================================
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Genus Abundance vs. soil texture
+
+```{r}
+join_df_ab_genus %>%
+  filter(soil_texture_Grade %in% c("Sand", "Clay loam") &
+         taxonGenus %in% c("Acacia"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = abundance,
+              color = taxonGenus)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+
+### Genus Abundance vs. climate
+
+```{r}
+join_df_ab_genus %>%
+  filter(!is.na(climaticCondition) &
+         taxonGenus %in% c("Acacia"))%>%
+  ggplot(aes(x = climaticCondition, 
+             y = abundance,
+              color = taxonGenus)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+
+### Species Richness vs. soil texture
+
+```{r}
+join_df_rich %>%
+  filter(soil_texture_Grade %in% c("Sand", "Clay loam"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+
+### Species Richness vs. climate
+
+```{r}
+join_df_rich %>%
+  filter(!is.na(climaticCondition))%>%
+  ggplot(aes(x = climaticCondition, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+
+Interactive Map
+=======================================================================
+
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+### Species Richness Map
+
+```{r}
+pal <- colorNumeric(
+  palette = "Reds",   # light → dark
+  domain = richness_df$unique_species_count
+)
+
+richness_df %>%
+  filter(!is.na(unique_species_count))%>%
+  leaflet() %>%
+      addTiles() %>%
+      addCircleMarkers(
+        lng = ~longitude_Degree,
+        lat = ~latitude_Degree,
+        color = "black",
+        weight = 1,
+        fillColor = ~pal(unique_species_count),
+        fillOpacity = 0.8,
+        radius = 3
+      ) %>%
+      addLegend(
+        "bottomright",
+        pal = pal,
+        values = ~unique_species_count,
+        title = "Species Richness(unique count)",
+        opacity = 1)
+
+
+```
+
+
+### Genus Abundance Map
+
+```{r}
+abundance_df_genus %>%
+  filter(taxonGenus %in% c("Acacia")) %>%
+  {
+    pal <- colorNumeric(
+      palette = "Reds",
+      domain = .$abundance   # only filtered categories
+    )
+    leaflet(.) %>%
+      addTiles() %>%
+      addCircleMarkers(
+        lng = ~longitude_Degree,
+        lat = ~latitude_Degree,
+        radius = 3,
+        fillColor = ~pal(abundance),
+        color = "black",
+        weight = 1,
+        fillOpacity = 0.8
+      )%>%
+      addLegend(
+          "bottomright",
+          pal = pal,
+          values = ~abundance,
+          title = "Genus Abundance",
+        opacity = 1
+      )
+}
+
+```
+
+### Genus distribution Map
+
+```{r}
+
+abundance_df_genus %>%
+  filter(taxonGenus %in% c("Acacia", "Eucalyptus")) %>%
+  {
+    pal <- colorFactor(
+      palette = c("blue", "red"),
+      domain = .$taxonGenus   # only filtered categories
+    )
+    leaflet(.) %>%
+      addTiles() %>%
+      addCircles(
+        lng = ~longitude_Degree,
+        lat = ~latitude_Degree,
+        radius = 2,
+        color = ~pal(taxonGenus),
+        fillOpacity = 0.5
+      )%>%
+      addLegend(
+          "bottomright",
+          pal = pal,
+          values = ~taxonGenus,
+          title = "Genus"
+      )
+}
+
+```
+
