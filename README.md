@@ -5,3 +5,8 @@ It consist of three parts.
 The first one is R script mainly conducting data preprocessing and produce output csv file for dashboard presentation.
 
 The rest two files are R markdown files with flexdashboard and shiny version respectively.
+
+Flexdashboard provide a static html file that can be easily embedded on website or shared.
+https://kevinthf.github.io/TERN-interactive-dashboard/
+
+Shiny version creates interactve interface which is friendly for user to explore the datasset. 
