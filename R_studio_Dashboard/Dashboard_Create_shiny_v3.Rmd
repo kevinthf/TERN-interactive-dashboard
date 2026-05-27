@@ -222,8 +222,8 @@ renderPlot({
     ggplot(aes(x = soil_texture_Grade, 
                y = abundance,
                 color = taxonGenus)) +
-    geom_violin(fill = "lightgray") +
-    geom_boxplot(width = 0.1,outlier.colour = "red")
+    
+    geom_boxplot(outlier.colour = "purple")
   },
   "Family"={
     join_df_ab_family %>%
@@ -233,8 +233,8 @@ renderPlot({
     ggplot(aes(x = soil_texture_Grade, 
                y = abundance,
                 color = taxonFamily)) +
-    geom_violin(fill = "lightgray") +
-    geom_boxplot(width = 0.1,outlier.colour = "red")
+
+    geom_boxplot(outlier.colour = "purple")
     
   })
      
@@ -256,8 +256,7 @@ renderPlot({
         ggplot(aes(x = climaticCondition, 
                    y = abundance,
                     color = taxonGenus)) +
-        geom_violin(fill = "lightgray") +
-        geom_boxplot(width = 0.1,outlier.colour = "red")
+        geom_boxplot(outlier.colour = "purple")
       
     },
     "Family"={
@@ -268,8 +267,7 @@ renderPlot({
         ggplot(aes(x = climaticCondition, 
                    y = abundance,
                     color = taxonFamily)) +
-        geom_violin(fill = "lightgray") +
-        geom_boxplot(width = 0.1,outlier.colour = "red")
+        geom_boxplot(outlier.colour = "purple")
       
     }
   )
@@ -517,7 +515,8 @@ renderPlot({
            soil_texture_Grade %in% input$soil_var_2)%>%
   ggplot(aes(x = soil_texture_Grade, 
              y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
+  geom_violin()+
+  
   geom_boxplot(width = 0.1,outlier.colour = "red")
 })
 
@@ -533,7 +532,7 @@ renderPlot({
            !is.na(climaticCondition))%>%
   ggplot(aes(x = climaticCondition, 
              y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
+  
   geom_boxplot(width = 0.1,outlier.colour = "red")
 })
 
