@@ -31,10 +31,12 @@ library(shiny)
 
 # Import csv processed data-set
 
+join_df_ab_species <-read.csv("processed_data/join_df_ab_species.csv", header = TRUE, stringsAsFactors = FALSE)
 join_df_ab_genus <-read.csv("processed_data/join_df_ab_genus.csv", header = TRUE, stringsAsFactors = FALSE)
 join_df_ab_family <-read.csv("processed_data/join_df_ab_family.csv", header = TRUE, stringsAsFactors = FALSE)
 join_df_rich <-read.csv("processed_data/join_df_rich.csv", header = TRUE, stringsAsFactors = FALSE)
 richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_species <-read.csv("processed_data/abundance_df_species.csv", header = TRUE, stringsAsFactors = FALSE)
 abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
 abundance_df_family <-read.csv("processed_data/abundance_df_family.csv", header = TRUE, stringsAsFactors = FALSE)
 
@@ -82,6 +84,12 @@ family <-c("Poaceae",
           "Rutaceae",
           "Pittosporaceae")
 
+species <- c("Eucalyptus obliqua",
+              "Empodisma minus",
+              "Eucalyptus piperita",
+              "Eucalyptus globoidea")
+
+
 
 ```
 
@@ -95,30 +103,29 @@ Taxon Abundance
 Column {.sidebar}
 -----------------------------------------------------------------------
 ```{r}
-selectInput("taxon_var_1", 
+radioButtons("taxon_var_1", 
             label= "Choose taxonomic rank:",
-            choices = c("Family","Genus"),
+            choices = c("Family","Genus","Species"),
             selected = "Genus")
 
 # dynamic input
 uiOutput("dynamic_input_1")
 
 #static input
-selectInput("state_var_1", 
+checkboxGroupInput("state_var_1", 
             label= "Choose State:",
             choices = states,
-            selected = "QD",
-            multiple = TRUE)
+            selected = states)
 
 selectInput("env_var_1", 
             label= "Choose numerical variable:",
             choices = env,
-            selected = "precipitationAnnualMean_millimetre")
+            selected = env[1])
 
 selectInput("soil_var_1", 
             label= "Choose soil texture Grade:",
             choices = soil,
-            selected = "Sand",
+            selected = c(soil[1],soil[7]),
             multiple = TRUE)
 
 ```
@@ -135,27 +142,31 @@ output$dynamic_input_1 <- renderUI({
     input$taxon_var_1,
 
     "Genus" = tagList(
-      selectInput("genus_var_1", 
-            label= "Choose single Genus for showing abundance map only:",
-            choices = genus,
-            selected = "Acacia"),
       
       selectInput("genus_var_mult_1", 
             label= "Choose Multiple Genera",
             choices = genus,
-            selected = c("Acacia","Eucalyptus"),
+            selected = c(genus[1],genus[2]),
             multiple = TRUE)
     ),
       
 
     "Family" = tagList(
-      selectInput("family_var_1", 
-            label= "Choose single Family for showing abundance map only:",
-            choices = family),
        
       selectInput("family_var_mult_1", 
             label= "Choose Multiple Families",
             choices = family,
+            selected= c(family[1]),
+            multiple = TRUE)
+      
+    ),
+    
+    "Species" = tagList(
+       
+      selectInput("species_var_mult_1", 
+            label= "Choose Multiple Species",
+            choices = species,
+            selected= c(species[1]),
             multiple = TRUE)
       
     )
@@ -198,7 +209,22 @@ renderPlot({
             stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonFamily),
                          formula = y ~ x,
                          parse = TRUE)
+         },
+         
+         "Species"={
+           join_df_ab_species %>%
+            filter(stateCode %in% input$state_var_1&
+              scientificName %in% input$species_var_mult_1) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "scientificName")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=scientificName),
+                         formula = y ~ x,
+                         parse = TRUE)
          }
+         
          )
   
   
@@ -236,7 +262,23 @@ renderPlot({
 
     geom_boxplot(outlier.colour = "purple")
     
-  })
+  },
+  "Species"={
+    join_df_ab_species %>%
+    filter(stateCode %in% input$state_var_1&
+           soil_texture_Grade %in% input$soil_var_1 &
+           scientificName %in% input$species_var_mult_1)%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = scientificName)) +
+
+    geom_boxplot(outlier.colour = "purple")
+    
+  }
+  
+  
+  
+  )
      
 })
 
@@ -268,98 +310,24 @@ renderPlot({
                    y = abundance,
                     color = taxonFamily)) +
         geom_boxplot(outlier.colour = "purple")
-      
-    }
-  )
-  
-})
-
-```
-
-### Taxon Abundance Map
-
-```{r}
-renderLeaflet({
-  
-  switch(
-    input$taxon_var_1,
-
-    "Genus" = {
-        abundance_df_genus %>%
-        filter(stateCode %in% input$state_var_1&
-          taxonGenus %in% input$genus_var_1) %>%
-        {
-          pal <- colorNumeric(
-            palette = "Reds",
-            domain = .$abundance   # only filtered categories
-          )
-          leaflet(.) %>%
-            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-            addLayersControl(
-              baseGroups = c("Base", "Satellite"),
-              options = layersControlOptions(collapsed = FALSE)
-            )%>%
-            addCircleMarkers(
-              lng = ~longitude_Degree,
-              lat = ~latitude_Degree,
-              radius = 3,
-              fillColor = ~pal(abundance),
-              color = "black",
-              weight = 1,
-              fillOpacity = 0.8
-            )%>%
-            addLegend(
-                "bottomright",
-                pal = pal,
-                values = ~abundance,
-                title = "Genus Abundance",
-              opacity = 1
-            )
-      }
-      
     },
-
-    "Family" = {
-      abundance_df_family %>%
+    "Species"={
+        join_df_ab_species %>%
         filter(stateCode %in% input$state_var_1&
-          taxonFamily %in% input$family_var_1) %>%
-        {
-          pal <- colorNumeric(
-            palette = "Reds",
-            domain = .$abundance   # only filtered categories
-          )
-          leaflet(.) %>%
-            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-            addLayersControl(
-              baseGroups = c("Base", "Satellite"),
-              options = layersControlOptions(collapsed = FALSE)
-            )%>%
-            addCircleMarkers(
-              lng = ~longitude_Degree,
-              lat = ~latitude_Degree,
-              radius = 3,
-              fillColor = ~pal(abundance),
-              color = "black",
-              weight = 1,
-              fillOpacity = 0.8
-            )%>%
-            addLegend(
-                "bottomright",
-                pal = pal,
-                values = ~abundance,
-                title = "Family Abundance",
-              opacity = 1
-            )
-      }
+          !is.na(climaticCondition) &
+               scientificName %in% input$species_var_mult_1)%>%
+        ggplot(aes(x = climaticCondition, 
+                   y = abundance,
+                    color = scientificName)) +
+        geom_boxplot(outlier.colour = "purple")
     }
   )
+  
 })
 
-
-
 ```
+
+
 
 
 ### Taxon distribution Map
@@ -386,12 +354,15 @@ renderLeaflet({
             baseGroups = c("Base", "Satellite"),
             options = layersControlOptions(collapsed = FALSE)
           )%>%
-          addCircles(
+          addCircleMarkers(
             lng = ~longitude_Degree,
             lat = ~latitude_Degree,
-            radius = 2,
+            radius = ~abundance/30,
             color = ~pal(taxonGenus),
-            fillOpacity = 0.5
+            popup = ~paste0(
+                "<b>Taxon Name:</b> ", taxonGenus,
+                "<br><b>Abundance:</b> ", abundance
+                )
           )%>%
           addLegend(
               "bottomright",
@@ -419,17 +390,55 @@ renderLeaflet({
                   baseGroups = c("Base", "Satellite"),
                   options = layersControlOptions(collapsed = FALSE)
                 )%>%
-                addCircles(
+                addCircleMarkers(
                   lng = ~longitude_Degree,
                   lat = ~latitude_Degree,
-                  radius = 2,
+                  radius = ~abundance/50,
                   color = ~pal(taxonFamily),
-                  fillOpacity = 0.5
+                  popup = ~paste0(
+                      "<b>Taxon Name:</b> ", taxonFamily,
+                      "<br><b>Abundance:</b> ", abundance
+                      )
                 )%>%
                 addLegend(
                     "bottomright",
                     pal = pal,
                     values = ~taxonFamily,
+                    title = "Family"
+                )
+          }
+    },
+
+    "Species" = {
+            abundance_df_species %>%
+            filter(stateCode %in% input$state_var_1&
+              scientificName %in% input$species_var_mult_1) %>%
+            {
+              pal <- colorFactor(
+                palette = "Set1",
+                domain = .$scientificName   # only filtered categories
+              )
+              leaflet(.) %>%
+                addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+                addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+                addLayersControl(
+                  baseGroups = c("Base", "Satellite"),
+                  options = layersControlOptions(collapsed = FALSE)
+                )%>%
+                addCircleMarkers(
+                  lng = ~longitude_Degree,
+                  lat = ~latitude_Degree,
+                  radius = ~abundance/50,
+                  color = ~pal(scientificName),
+                  popup = ~paste0(
+                      "<b>Taxon Name:</b> ", scientificName,
+                      "<br><b>Abundance:</b> ", abundance
+                      )
+                )%>%
+                addLegend(
+                    "bottomright",
+                    pal = pal,
+                    values = ~scientificName,
                     title = "Family"
                 )
           }
@@ -457,21 +466,20 @@ Column {.sidebar}
 ```{r}
 
 
-selectInput("state_var_2", 
+checkboxGroupInput("state_var_2", 
             label= "Choose State:",
             choices = states,
-            selected = "QD",
-            multiple = TRUE)
+            selected = "QD")
 
 selectInput("env_var_2", 
             label= "Choose numerical variable:",
             choices = env,
-            selected = "precipitationAnnualMean_millimetre")
+            selected = env[1])
 
 selectInput("soil_var_2", 
             label= "Choose soil texture Grade:",
             choices = soil,
-            selected = "Sand",
+            selected = c(soil[1],soil[7]),
             multiple = TRUE)
 ```
 
@@ -515,8 +523,7 @@ renderPlot({
            soil_texture_Grade %in% input$soil_var_2)%>%
   ggplot(aes(x = soil_texture_Grade, 
              y = unique_species_count)) +
-  geom_violin()+
-  
+  geom_violin(fill = "lightgray") +
   geom_boxplot(width = 0.1,outlier.colour = "red")
 })
 
@@ -532,7 +539,7 @@ renderPlot({
            !is.na(climaticCondition))%>%
   ggplot(aes(x = climaticCondition, 
              y = unique_species_count)) +
-  
+  geom_violin(fill = "lightgray")+
   geom_boxplot(width = 0.1,outlier.colour = "red")
 })
 
@@ -543,7 +550,7 @@ renderPlot({
 ```{r}
 renderLeaflet({
   pal <- colorNumeric(
-  palette = "Reds",   # light → dark
+  palette = "Blues",   # light → dark
   domain = richness_df$unique_species_count
 )
 
@@ -564,7 +571,10 @@ richness_df %>%
         weight = 1,
         fillColor = ~pal(unique_species_count),
         fillOpacity = 0.8,
-        radius = 3
+        radius = 5,
+        popup = ~paste0(
+            "<b>Unique Species Number:</b> ", unique_species_count
+            )
       ) %>%
       addLegend(
         "bottomright",
