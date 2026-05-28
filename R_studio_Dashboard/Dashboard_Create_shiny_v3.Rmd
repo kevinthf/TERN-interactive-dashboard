@@ -39,7 +39,8 @@ richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsA
 abundance_df_species <-read.csv("processed_data/abundance_df_species.csv", header = TRUE, stringsAsFactors = FALSE)
 abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
 abundance_df_family <-read.csv("processed_data/abundance_df_family.csv", header = TRUE, stringsAsFactors = FALSE)
-
+family_interest <-read.csv("Description_data/Family_interest.csv", header = TRUE, stringsAsFactors = FALSE)
+species_interest <-read.csv("Description_data/Species_interest.csv", header = TRUE, stringsAsFactors = FALSE)
 
 #Input vector
 states <- c("NS","NT","QD","SA","TC","VC","WA")
@@ -75,20 +76,12 @@ genus <- c("Acacia",
           "Xanthorrhoea",
           "Melaleuca")
 
-family <-c("Poaceae",
-          "Fabaceae",
-          "Myrtaceae",
-          "Chenopodaceae",
-          "Proteaceae",
-          "Xanthorrhoeaceae",
-          "Rutaceae",
-          "Pittosporaceae")
 
-species <- c("Eucalyptus obliqua",
-              "Empodisma minus",
-              "Eucalyptus piperita",
-              "Eucalyptus globoidea")
+family <- family_interest$Family_Scientific
 
+wet_species <- species_interest$Species[species_interest$Condition=="Wet forests"]
+
+dry_species <- species_interest$Species[species_interest$Condition=="Dry species"]
 
 
 ```
@@ -164,10 +157,17 @@ output$dynamic_input_1 <- renderUI({
     "Species" = tagList(
        
       selectInput("species_var_mult_1", 
-            label= "Choose Multiple Species",
-            choices = species,
-            selected= c(species[1]),
+            label= "Choose Multiple Species (Wet Forest)",
+            choices = wet_species,
+            selected= c(wet_species[1]),
+            multiple = TRUE
+            ),
+      selectInput("species_var_mult_2", 
+            label= "Choose Multiple Species (Dry)",
+            choices = dry_species,
+            selected= c(dry_species[1]),
             multiple = TRUE)
+      
       
     )
   
@@ -214,7 +214,7 @@ renderPlot({
          "Species"={
            join_df_ab_species %>%
             filter(stateCode %in% input$state_var_1&
-              scientificName %in% input$species_var_mult_1) %>%
+              scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
             ggplot(aes_string(x = input$env_var_1, 
                        y = "abundance",
                         color = "scientificName")) +
@@ -267,7 +267,7 @@ renderPlot({
     join_df_ab_species %>%
     filter(stateCode %in% input$state_var_1&
            soil_texture_Grade %in% input$soil_var_1 &
-           scientificName %in% input$species_var_mult_1)%>%
+           scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2))%>%
     ggplot(aes(x = soil_texture_Grade, 
                y = abundance,
                 color = scientificName)) +
@@ -315,7 +315,7 @@ renderPlot({
         join_df_ab_species %>%
         filter(stateCode %in% input$state_var_1&
           !is.na(climaticCondition) &
-               scientificName %in% input$species_var_mult_1)%>%
+               scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2))%>%
         ggplot(aes(x = climaticCondition, 
                    y = abundance,
                     color = scientificName)) +
@@ -412,7 +412,7 @@ renderLeaflet({
     "Species" = {
             abundance_df_species %>%
             filter(stateCode %in% input$state_var_1&
-              scientificName %in% input$species_var_mult_1) %>%
+              scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
             {
               pal <- colorFactor(
                 palette = "Set1",
@@ -439,7 +439,7 @@ renderLeaflet({
                     "bottomright",
                     pal = pal,
                     values = ~scientificName,
-                    title = "Family"
+                    title = "Species"
                 )
           }
     }
