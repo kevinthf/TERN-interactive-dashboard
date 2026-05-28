@@ -39,7 +39,7 @@ soil_data_clean <-soil_data %>%
 mode_fun_all <- function(x) {
   # remove NA values first
   x_no_na <- x[!is.na(x)]
-  # if nothing left → return NA
+  # if nothing left b return NA
   if (length(x_no_na) == 0) {
     return(NA)
   }
@@ -90,7 +90,7 @@ join_df_ab_family$siteVisitStartDate <- as.POSIXct(join_df_ab_family$siteVisitSt
 
 
 
-# Joining Data-sets, joined and soil2
+# Joining Data-sets, joined and soil_clean
 join_df_ab_family <- join_df_ab_family %>%
   inner_join(soil_data_clean,by = c("siteName", "siteVisitName"))
 
@@ -126,8 +126,44 @@ join_df_ab_genus$siteVisitStartDate <- as.POSIXct(join_df_ab_genus$siteVisitStar
 
 
 
-# Joining Data-sets, joined and soil2
+# Joining Data-sets, joined and soil_clean
 join_df_ab_genus <- join_df_ab_genus %>%
+  inner_join(soil_data_clean,by = c("siteName", "siteVisitName"))
+
+##############################Abundance Data Species##################################
+
+# Aggregate species data by Genus, location and date
+abundance_df_species <- plant_species_data %>%
+  count(siteName,
+        stateCode,
+        siteVisitName, 
+        scientificName,
+        latitude_Degree,
+        longitude_Degree,
+        siteVisitStartDate, name = "abundance")
+
+# Joining Data-sets species and weather
+join_df_ab_species <- abundance_df_species %>%
+  inner_join(
+    weather_data %>% select(siteName, 
+                            siteVisitName,
+                            precipitationAnnualMean_millimetre,
+                            solarRadiationMean_megajoulePerSquareMetre,
+                            maximumTemperature_degreeCelsius,
+                            minimumTemperature_degreeCelsius,
+                            temperatureAnnualMean_degreeCelsius,
+                            climaticCondition),
+    by = c("siteName", "siteVisitName"))
+
+# Convert time format
+join_df_ab_species$siteVisitStartDate <- as.POSIXct(join_df_ab_species$siteVisitStartDate, format = "%Y-%m-%dT%H:%M:%S")
+
+
+
+
+
+# Joining Data-sets, joined and soil_clean
+join_df_ab_species <- join_df_ab_species %>%
   inner_join(soil_data_clean,by = c("siteName", "siteVisitName"))
 
 
@@ -175,9 +211,11 @@ join_df_rich <- join_df_rich %>%
 
 write.csv(join_df_ab_genus, "processed_data/join_df_ab_genus.csv", row.names = FALSE)
 write.csv(join_df_ab_family, "processed_data/join_df_ab_family.csv", row.names = FALSE)
+write.csv(join_df_ab_species, "processed_data/join_df_ab_species.csv", row.names = FALSE)
 write.csv(join_df_rich, "processed_data/join_df_rich.csv", row.names = FALSE)
 write.csv(richness_df, "processed_data/richness_df.csv", row.names = FALSE)
 write.csv(abundance_df_genus, "processed_data/abundance_df_genus.csv", row.names = FALSE)
 write.csv(abundance_df_family, "processed_data/abundance_df_family.csv", row.names = FALSE)
+write.csv(abundance_df_species, "processed_data/abundance_df_species.csv", row.names = FALSE)
 
 
