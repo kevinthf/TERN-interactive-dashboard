@@ -83,6 +83,16 @@ wet_species <- species_interest$Species[species_interest$Condition=="Wet forests
 
 dry_species <- species_interest$Species[species_interest$Condition=="Dry species"]
 
+landuse_map_url <- "https://geo.agriculture.gov.au/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer"
+
+## Change land use layer
+landuse_map_layer <-4
+
+landuse_map_attribute <- "ABARES 2022, Land use of Australia 2010–11 to 2015–16, 250 m, ABARES, Canberra, September CC BY 4.0."
+
+landuse_legend_image_url <- paste0("https://geo.agriculture.gov.au:443/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=",landuse_map_layer)
+
+landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_legend_image_url, "'style='width:300px'>")
 
 ```
 
@@ -285,47 +295,6 @@ renderPlot({
 ```
 
 
-### Climate condition
-
-```{r}
-renderPlot({
-  switch (input$taxon_var_1,
-    "Genus" = {
-        join_df_ab_genus %>%
-        filter(stateCode %in% input$state_var_1&
-          !is.na(climaticCondition) &
-               taxonGenus %in% input$genus_var_mult_1)%>%
-        ggplot(aes(x = climaticCondition, 
-                   y = abundance,
-                    color = taxonGenus)) +
-        geom_boxplot(outlier.colour = "purple")
-      
-    },
-    "Family"={
-        join_df_ab_family %>%
-        filter(stateCode %in% input$state_var_1&
-          !is.na(climaticCondition) &
-               taxonFamily %in% input$family_var_mult_1)%>%
-        ggplot(aes(x = climaticCondition, 
-                   y = abundance,
-                    color = taxonFamily)) +
-        geom_boxplot(outlier.colour = "purple")
-    },
-    "Species"={
-        join_df_ab_species %>%
-        filter(stateCode %in% input$state_var_1&
-          !is.na(climaticCondition) &
-               scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2))%>%
-        ggplot(aes(x = climaticCondition, 
-                   y = abundance,
-                    color = scientificName)) +
-        geom_boxplot(outlier.colour = "purple")
-    }
-  )
-  
-})
-
-```
 
 
 
@@ -350,8 +319,23 @@ renderLeaflet({
         leaflet(.) %>%
           addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
           addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+          addWMSTiles(
+            baseUrl = landuse_map_url,
+            layers = landuse_map_layer,
+            options = WMSTileOptions(
+              format = "image/png",
+              transparent = TRUE
+            ),
+            group = "Land Use",
+            attribution = landuse_map_attribute
+          )%>%
+       
+          addControl(
+            html = landuse_legend_image_html, 
+            position = "bottomleft"
+            )%>%
           addLayersControl(
-            baseGroups = c("Base", "Satellite"),
+            baseGroups = c("Base", "Satellite","Land Use"),
             options = layersControlOptions(collapsed = FALSE)
           )%>%
           addCircleMarkers(
@@ -375,72 +359,102 @@ renderLeaflet({
     },
 
     "Family" = {
-            abundance_df_family %>%
-            filter(stateCode %in% input$state_var_1&
-              taxonFamily %in% input$family_var_mult_1) %>%
-            {
-              pal <- colorFactor(
-                palette = "Set1",
-                domain = .$taxonFamily   # only filtered categories
-              )
-              leaflet(.) %>%
-                addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-                addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-                addLayersControl(
-                  baseGroups = c("Base", "Satellite"),
-                  options = layersControlOptions(collapsed = FALSE)
-                )%>%
-                addCircleMarkers(
-                  lng = ~longitude_Degree,
-                  lat = ~latitude_Degree,
-                  radius = ~abundance/50,
-                  color = ~pal(taxonFamily),
-                  popup = ~paste0(
-                      "<b>Taxon Name:</b> ", taxonFamily,
-                      "<br><b>Abundance:</b> ", abundance
-                      )
-                )%>%
-                addLegend(
-                    "bottomright",
-                    pal = pal,
-                    values = ~taxonFamily,
-                    title = "Family"
-                )
+        abundance_df_family %>%
+        filter(stateCode %in% input$state_var_1&
+          taxonFamily %in% input$family_var_mult_1) %>%
+        {
+          pal <- colorFactor(
+            palette = "Set1",
+            domain = .$taxonFamily   # only filtered categories
+          )
+          leaflet(.) %>%
+            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+            addWMSTiles(
+              baseUrl = landuse_map_url,
+              layers = landuse_map_layer,
+              options = WMSTileOptions(
+                format = "image/png",
+                transparent = TRUE
+              ),
+              group = "Land Use",
+              attribution = landuse_map_attribute
+            )%>%
+         
+            addControl(
+              html = landuse_legend_image_html, 
+              position = "bottomleft"
+              )%>%
+            addLayersControl(
+              baseGroups = c("Base", "Satellite","Land Use"),
+              options = layersControlOptions(collapsed = FALSE)
+            )%>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = ~abundance/50,
+              color = ~pal(taxonFamily),
+              popup = ~paste0(
+                  "<b>Taxon Name:</b> ", taxonFamily,
+                  "<br><b>Abundance:</b> ", abundance
+                  )
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~taxonFamily,
+                title = "Family"
+            )
           }
     },
 
     "Species" = {
-            abundance_df_species %>%
-            filter(stateCode %in% input$state_var_1&
-              scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
-            {
-              pal <- colorFactor(
-                palette = "Set1",
-                domain = .$scientificName   # only filtered categories
-              )
-              leaflet(.) %>%
-                addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-                addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-                addLayersControl(
-                  baseGroups = c("Base", "Satellite"),
-                  options = layersControlOptions(collapsed = FALSE)
-                )%>%
-                addCircleMarkers(
-                  lng = ~longitude_Degree,
-                  lat = ~latitude_Degree,
-                  radius = ~abundance/50,
-                  color = ~pal(scientificName),
-                  popup = ~paste0(
-                      "<b>Taxon Name:</b> ", scientificName,
-                      "<br><b>Abundance:</b> ", abundance
-                      )
-                )%>%
-                addLegend(
-                    "bottomright",
-                    pal = pal,
-                    values = ~scientificName,
-                    title = "Species"
-                )
+        abundance_df_species %>%
+        filter(stateCode %in% input$state_var_1&
+          scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
+        {
+          pal <- colorFactor(
+            palette = "Set1",
+            domain = .$scientificName   # only filtered categories
+          )
+          leaflet(.) %>%
+            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+            addWMSTiles(
+              baseUrl = landuse_map_url,
+              layers = landuse_map_layer,
+              options = WMSTileOptions(
+                format = "image/png",
+                transparent = TRUE
+              ),
+              group = "Land Use",
+              attribution = landuse_map_attribute
+            )%>%
+         
+            addControl(
+              html = landuse_legend_image_html, 
+              position = "bottomleft"
+              )%>%
+            addLayersControl(
+              baseGroups = c("Base", "Satellite","Land Use"),
+              options = layersControlOptions(collapsed = FALSE)
+            )%>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = ~abundance/50,
+              color = ~pal(scientificName),
+              popup = ~paste0(
+                  "<b>Taxon Name:</b> ", scientificName,
+                  "<br><b>Abundance:</b> ", abundance
+                  )
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~scientificName,
+                title = "Species"
+            )
           }
     }
 
@@ -469,7 +483,7 @@ Column {.sidebar}
 checkboxGroupInput("state_var_2", 
             label= "Choose State:",
             choices = states,
-            selected = "QD")
+            selected = states)
 
 selectInput("env_var_2", 
             label= "Choose numerical variable:",
@@ -530,20 +544,6 @@ renderPlot({
 ```
 
 
-### Climate condition
-
-```{r}
-renderPlot({
-  join_df_rich %>%
-  filter(stateCode %in% input$state_var_2&
-           !is.na(climaticCondition))%>%
-  ggplot(aes(x = climaticCondition, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray")+
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-})
-
-```
 
 ### Map
 
@@ -560,8 +560,26 @@ richness_df %>%
   leaflet() %>%
       addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
       addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+      
+      addWMSTiles(
+        baseUrl = landuse_map_url,
+        layers = landuse_map_layer,
+        options = WMSTileOptions(
+          format = "image/png",
+          transparent = TRUE
+        ),
+        group = "Land Use",
+        attribution = landuse_map_attribute
+      )%>%
+   
+      addControl(
+        html = landuse_legend_image_html, 
+        position = "bottomleft"
+        )%>%
+      
+      
       addLayersControl(
-        baseGroups = c("Base", "Satellite"),
+        baseGroups = c("Base", "Satellite","Land Use"),
         options = layersControlOptions(collapsed = FALSE)
       )%>%
       addCircleMarkers(
@@ -580,8 +598,8 @@ richness_df %>%
         "bottomright",
         pal = pal,
         values = ~unique_species_count,
-        title = "Species Richness(unique count)",
-        opacity = 1)
+        title = "Unique Species count",
+        opacity = 1) 
 })
 
 ```
