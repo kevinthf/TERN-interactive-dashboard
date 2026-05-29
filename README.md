@@ -13,3 +13,10 @@ Flexdashboard provide a static html file that can be easily embedded on website 
 https://kevinthf.github.io/TERN-interactive-dashboard/
 
 Shiny version creates interactve interface which is friendly for user to explore the datasset. 
+
+
+The Land Use Base Map was sourced from the Australian Bureau of Agricultural and Resource Economics and Sciences (ABARES) ArcGIS MapServer.
+
+Attribution:
+Australian Bureau of Agricultural and Resource Economics and Sciences (ABARES) 2022, Land Use of Australia 2010–11 to 2015–16, 250 m, Canberra. Licensed under CC BY 4.0.
+https://doi.org/10.25814/7ygw-4d64
