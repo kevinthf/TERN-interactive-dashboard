@@ -1,0 +1,682 @@
+---
+title: "My Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+    logo: image_logo.png
+    self_contained: true
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+##### Install package (only needed the first time)#####
+# install.packages("flexdashboard")
+# install.packages("dplyr")
+# install.packages("DT")
+# install.packages("ggplot2")
+# install.packages("ggpmisc")
+# install.packages("leaflet")
+# install.packages("shiny")
+#######################################################
+
+
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+library(ggpmisc)
+library(DT)
+library(leaflet)
+library(shiny)
+
+# Import csv processed data-set
+
+join_df_ab_species <-read.csv("processed_data/join_df_ab_species.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_ab_genus <-read.csv("processed_data/join_df_ab_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_ab_family <-read.csv("processed_data/join_df_ab_family.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_rich <-read.csv("processed_data/join_df_rich.csv", header = TRUE, stringsAsFactors = FALSE)
+richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_species <-read.csv("processed_data/abundance_df_species.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+abundance_df_family <-read.csv("processed_data/abundance_df_family.csv", header = TRUE, stringsAsFactors = FALSE)
+family_interest <-read.csv("Description_data/Family_interest.csv", header = TRUE, stringsAsFactors = FALSE)
+species_interest <-read.csv("Description_data/Species_interest.csv", header = TRUE, stringsAsFactors = FALSE)
+
+#Input vector
+states <- c("NS","NT","QD","SA","TC","VC","WA")
+
+env <-c("precipitationAnnualMean_millimetre",
+        "solarRadiationMean_megajoulePerSquareMetre",
+        "maximumTemperature_degreeCelsius",
+        "minimumTemperature_degreeCelsius",
+        "temperatureAnnualMean_degreeCelsius",
+        "average_soil_pH_unitless",
+        "average_soil_EC_dSPerMetre")
+
+soil <- c("Clay loam",
+          "Clay loam sandy ",
+          "Clayey sand",
+          "Heavy clay",
+          "Light clay",
+          "Light medium clay",
+          "Loam",
+          "Loamy sand",
+          "Medium clay",
+          "Medium heavy clay",
+          "Sand",
+          "Sandy clay loam",
+          "Sandy loam")
+
+genus <- c("Acacia",
+          "Eucalyptus",
+          "Melaleuca",
+          "Poaceae",
+          "Chenopodium",
+          "Corymbia",
+          "Xanthorrhoea",
+          "Melaleuca")
+
+
+family <- family_interest$Family_Scientific
+
+wet_species <- species_interest$Species[species_interest$Condition=="Wet forests"]
+
+dry_species <- species_interest$Species[species_interest$Condition=="Dry species"]
+
+
+#External URL
+landuse_map_url <- "https://geo.agriculture.gov.au/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer"
+landuse_map_attribute <- "ABARES 2022, Land use of Australia 2010–11 to 2015–16, 250 m, ABARES, Canberra, September CC BY 4.0."
+legend_image_url_template <- "https://geo.agriculture.gov.au:443/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer="
+
+
+map_layer_title <- c("2015-16 - Agriculture"=2,
+                     "2015-16 - Agricultural industries"=3,
+                     "2015-16 - 9 class classification"=4,
+                     "2015-16 - 18 class classification"=5,
+                     "2015-16 - Secondary classification"=6,
+                     "2015-16 - Primary classification"=7,
+                     "2010-11 - Agriculture"=9,
+                     "2010-11 - Agricultural industries"=10,
+                     "2010-11 - 9 class classification"=11,
+                     "2010-11 - 18 class classification"=12,
+                     "2010-11 - Secondary classification"=13,
+                     "2010-11 - Primary classification"=14,
+                     "2010–11 to 2015–16 - Land use change 18 class"=15
+                     )
+
+
+```
+
+
+
+
+Taxon Abundance
+=======================================================================
+
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+radioButtons("taxon_var_1", 
+            label= "Choose taxonomic rank:",
+            choices = c("Family","Genus","Species"),
+            selected = "Species")
+
+# dynamic input
+uiOutput("dynamic_input_1")
+
+#static input
+checkboxGroupInput("state_var_1", 
+            label= "Choose State:",
+            choices = states,
+            selected = states,
+            inline = TRUE)
+
+selectInput("env_var_1", 
+            label= "Choose numerical variable:",
+            choices = env,
+            selected = env[1])
+
+selectInput("soil_var_1", 
+            label= "Choose soil texture Grade:",
+            choices = soil,
+            selected = c(soil[1],soil[7]),
+            multiple = TRUE)
+
+selectInput("map_var_1", 
+            label= "Choose Land Use Map type:",
+            choices = map_layer_title,
+            selected = map_layer_title[3])
+
+
+
+```
+
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+```{r}
+output$dynamic_input_1 <- renderUI({
+
+  switch(
+    input$taxon_var_1,
+
+    "Genus" = tagList(
+      
+      selectInput("genus_var_mult_1", 
+            label= "Choose Multiple Genera",
+            choices = genus,
+            selected = c(genus[1],genus[2]),
+            multiple = TRUE)
+    ),
+      
+
+    "Family" = tagList(
+       
+      selectInput("family_var_mult_1", 
+            label= "Choose Multiple Families",
+            choices = family,
+            selected= c(family[1]),
+            multiple = TRUE)
+      
+    ),
+    
+    "Species" = tagList(
+       
+      selectInput("species_var_mult_1", 
+            label= "Choose Multiple Species (Wet Forest)",
+            choices = wet_species,
+            selected= c(wet_species[1]),
+            multiple = TRUE
+            ),
+      selectInput("species_var_mult_2", 
+            label= "Choose Multiple Species (Dry)",
+            choices = dry_species,
+            selected= c(dry_species[1]),
+            multiple = TRUE)
+      
+      
+    )
+  
+  )
+})
+```
+
+
+
+### Numerical variable
+
+```{r}
+renderPlot({
+  
+  switch(input$taxon_var_1,
+         "Genus"={
+           join_df_ab_genus %>%
+            filter(stateCode %in% input$state_var_1&
+              taxonGenus %in% input$genus_var_mult_1) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "taxonGenus")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonGenus),
+                         formula = y ~ x,
+                         parse = TRUE)
+         },
+         
+         "Family"={
+           join_df_ab_family %>%
+            filter(stateCode %in% input$state_var_1&
+              taxonFamily %in% input$family_var_mult_1) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "taxonFamily")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonFamily),
+                         formula = y ~ x,
+                         parse = TRUE)
+         },
+         
+         "Species"={
+           join_df_ab_species %>%
+            filter(stateCode %in% input$state_var_1&
+              scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
+            ggplot(aes_string(x = input$env_var_1, 
+                       y = "abundance",
+                        color = "scientificName")) +
+            geom_point()+
+            geom_smooth(method = "lm", se = FALSE)+
+            stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=scientificName),
+                         formula = y ~ x,
+                         parse = TRUE)
+         }
+         
+         )
+  
+  
+})
+
+
+
+```
+
+
+### Soil texture
+
+```{r}
+renderPlot({
+  switch(input$taxon_var_1,
+         "Genus"={
+    join_df_ab_genus %>%
+    filter(stateCode %in% input$state_var_1&
+           soil_texture_Grade %in% input$soil_var_1 &
+           taxonGenus %in% input$genus_var_mult_1)%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = taxonGenus)) +
+    
+    geom_boxplot(outlier.colour = "purple")
+  },
+  "Family"={
+    join_df_ab_family %>%
+    filter(stateCode %in% input$state_var_1&
+           soil_texture_Grade %in% input$soil_var_1 &
+           taxonFamily %in% input$family_var_mult_1)%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = taxonFamily)) +
+
+    geom_boxplot(outlier.colour = "purple")
+    
+  },
+  "Species"={
+    join_df_ab_species %>%
+    filter(stateCode %in% input$state_var_1&
+           soil_texture_Grade %in% input$soil_var_1 &
+           scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2))%>%
+    ggplot(aes(x = soil_texture_Grade, 
+               y = abundance,
+                color = scientificName)) +
+
+    geom_boxplot(outlier.colour = "purple")
+    
+  }
+  
+  
+  
+  )
+     
+})
+
+```
+
+
+
+
+### Taxon distribution Map
+
+```{r}
+renderLeaflet({
+  
+  landuse_legend_image_url <- paste0(legend_image_url_template,as.numeric(input$map_var_1))
+  landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_legend_image_url, "'style='width:200px'>")
+  
+  switch(
+    input$taxon_var_1,
+
+    "Genus" = {
+      abundance_df_genus %>%
+      filter(stateCode %in% input$state_var_1&
+        taxonGenus %in% input$genus_var_mult_1) %>%
+      {
+        pal <- colorFactor(
+          palette = "Set1",
+          domain = .$taxonGenus   # only filtered categories
+        )
+        leaflet(.) %>%
+          addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+          addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+          addWMSTiles(
+            baseUrl = landuse_map_url,
+            layers = as.numeric(input$map_var_1),
+            options = WMSTileOptions(
+              format = "image/png",
+              transparent = TRUE
+            ),
+            group = "Land Use",
+            attribution = landuse_map_attribute
+          )%>%
+       
+          addControl(
+            html = landuse_legend_image_html, 
+            position = "bottomleft"
+            )%>%
+          addLayersControl(
+            baseGroups = c("Land Use","Base", "Satellite"),
+            options = layersControlOptions(collapsed = FALSE)
+          )%>%
+          addCircleMarkers(
+            lng = ~longitude_Degree,
+            lat = ~latitude_Degree,
+            radius = ~abundance/30,
+            color = ~pal(taxonGenus),
+            popup = ~paste0(
+                "<b>Taxon Name:</b> ", taxonGenus,
+                "<br><b>Abundance:</b> ", abundance
+                )
+          )%>%
+          addLegend(
+              "bottomright",
+              pal = pal,
+              values = ~taxonGenus,
+              title = "Genus"
+          )
+    }
+      
+    },
+
+    "Family" = {
+        abundance_df_family %>%
+        filter(stateCode %in% input$state_var_1&
+          taxonFamily %in% input$family_var_mult_1) %>%
+        {
+          pal <- colorFactor(
+            palette = "Set1",
+            domain = .$taxonFamily   # only filtered categories
+          )
+          leaflet(.) %>%
+            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+            addWMSTiles(
+              baseUrl = landuse_map_url,
+              layers = as.numeric(input$map_var_1),
+              options = WMSTileOptions(
+                format = "image/png",
+                transparent = TRUE
+              ),
+              group = "Land Use",
+              attribution = landuse_map_attribute
+            )%>%
+         
+            addControl(
+              html = landuse_legend_image_html, 
+              position = "bottomleft"
+              )%>%
+            addLayersControl(
+              baseGroups = c("Land Use","Base", "Satellite"),
+              options = layersControlOptions(collapsed = FALSE)
+            )%>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = ~abundance/50,
+              color = ~pal(taxonFamily),
+              popup = ~paste0(
+                  "<b>Taxon Name:</b> ", taxonFamily,
+                  "<br><b>Abundance:</b> ", abundance
+                  )
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~taxonFamily,
+                title = "Family"
+            )
+          }
+    },
+
+    "Species" = {
+        abundance_df_species %>%
+        filter(stateCode %in% input$state_var_1&
+          scientificName %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
+        {
+          pal <- colorFactor(
+            palette = "Set1",
+            domain = .$scientificName   # only filtered categories
+          )
+          leaflet(.) %>%
+            addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+            addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+            addWMSTiles(
+              baseUrl = landuse_map_url,
+              layers = as.numeric(input$map_var_1),
+              options = WMSTileOptions(
+                format = "image/png",
+                transparent = TRUE
+              ),
+              group = "Land Use",
+              attribution = landuse_map_attribute
+            )%>%
+         
+            addControl(
+              html = landuse_legend_image_html, 
+              position = "bottomleft"
+              )%>%
+            addLayersControl(
+              baseGroups = c("Land Use","Base", "Satellite"),
+              options = layersControlOptions(collapsed = FALSE)
+            )%>%
+            addCircleMarkers(
+              lng = ~longitude_Degree,
+              lat = ~latitude_Degree,
+              radius = ~abundance/50,
+              color = ~pal(scientificName),
+              popup = ~paste0(
+                  "<b>Taxon Name:</b> ", scientificName,
+                  "<br><b>Abundance:</b> ", abundance
+                  )
+            )%>%
+            addLegend(
+                "bottomright",
+                pal = pal,
+                values = ~scientificName,
+                title = "Species"
+            )
+          }
+    }
+
+  )
+  
+})
+
+```
+
+
+Row 
+-----------------------------------------------------------------------
+
+### Taxom Brief Description
+
+```{r}
+
+renderDataTable({
+  switch(input$taxon_var_1,
+         
+  "Family"={
+    df <- family_interest %>%
+    filter(Family_Scientific %in% input$family_var_mult_1) %>%
+    select(Family_Scientific, 
+           Family_Common,
+           General_characteristics_Australia_focused,
+           Rainforest_species_present.,
+           Key_references)
+    
+    datatable(df, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+    
+  },
+  "Species"={
+    df_2 <- species_interest %>%
+    filter(Species %in% c(input$species_var_mult_1,input$species_var_mult_2)) %>%
+    select(Species, 
+           common_name,
+           Likely_Affinity,
+           distribution,
+           Reference_link)
+    
+    datatable(df_2, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+    
+  }
+  
+  )
+
+  
+})
+
+
+```
+
+
+
+Species Richness
+=======================================================================
+
+Input {.sidebar}
+-----------------------------------------------------------------------
+```{r}
+
+
+checkboxGroupInput("state_var_2", 
+            label= "Choose State:",
+            choices = states,
+            selected = states,
+            inline = TRUE)
+
+selectInput("env_var_2", 
+            label= "Choose numerical variable:",
+            choices = env,
+            selected = env[1])
+
+selectInput("soil_var_2", 
+            label= "Choose soil texture Grade:",
+            choices = soil,
+            selected = c(soil[1],soil[7]),
+            multiple = TRUE)
+
+selectInput("map_var_2", 
+            label= "Choose Land Use Map type:",
+            choices = map_layer_title,
+            selected = map_layer_title[3])
+
+```
+
+
+
+Row {.tabset}
+-----------------------------------------------------------------------
+
+
+### Numerical variable 
+
+
+```{r}
+renderPlot({
+  join_df_rich %>%
+  filter(stateCode %in% input$state_var_2) %>%
+  ggplot(aes_string(x =input$env_var_2, 
+             y = "unique_species_count")) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
+               formula = y ~ x,
+               parse = TRUE,
+               label.x = 5,
+               label.y = 15)
+})
+
+```
+
+
+
+
+
+
+### Soil texture
+
+```{r}
+renderPlot({
+  join_df_rich %>%
+  filter(stateCode %in% input$state_var_2&
+           soil_texture_Grade %in% input$soil_var_2)%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+})
+
+```
+
+
+
+### Map
+
+```{r}
+renderLeaflet({
+  pal <- colorNumeric(
+  palette = "Blues",   # light → dark
+  domain = richness_df$unique_species_count
+  )
+  
+  landuse_legend_image_url <- paste0(legend_image_url_template,as.numeric(input$map_var_2))
+  landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_legend_image_url, "'style='width:300px'>")
+
+  richness_df %>%
+    filter(stateCode %in% input$state_var_2&
+             !is.na(unique_species_count))%>%
+    leaflet() %>%
+        addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
+        addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+        
+        addWMSTiles(
+          baseUrl = landuse_map_url,
+          layers = as.numeric(input$map_var_2),
+          options = WMSTileOptions(
+            format = "image/png",
+            transparent = TRUE
+          ),
+          group = "Land Use",
+          attribution = landuse_map_attribute
+        )%>%
+     
+        addControl(
+          html = landuse_legend_image_html, 
+          position = "bottomleft"
+          )%>%
+        
+        
+        addLayersControl(
+          baseGroups = c("Land Use","Base", "Satellite"),
+          options = layersControlOptions(collapsed = FALSE)
+        )%>%
+        addCircleMarkers(
+          lng = ~longitude_Degree,
+          lat = ~latitude_Degree,
+          color = "black",
+          weight = 1,
+          fillColor = ~pal(unique_species_count),
+          fillOpacity = 0.8,
+          radius = 5,
+          popup = ~paste0(
+              "<b>Unique Species Number:</b> ", unique_species_count
+              )
+        ) %>%
+        addLegend(
+          "bottomright",
+          pal = pal,
+          values = ~unique_species_count,
+          title = "Unique Species count",
+          opacity = 1) 
+})
+
+```
+
+
