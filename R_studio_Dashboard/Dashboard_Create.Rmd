@@ -34,6 +34,19 @@ richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsA
 abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
 
 
+# External Variable
+
+landuse_map_url <- "https://geo.agriculture.gov.au/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer"
+
+landuse_map_layer <-4
+
+landuse_map_attribute <- "ABARES 2022, Land use of Australia 2010–11 to 2015–16, 250 m, ABARES, Canberra, September CC BY 4.0."
+
+landuse_legend_image_url <- paste0("https://geo.agriculture.gov.au:443/arcgis/services/ABARESFLS/Land_use_of_Australia_2010_11_to_2015_16/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=",landuse_map_layer)
+
+landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_legend_image_url, "'style='width:300px'>")
+
+
 ```
 
 Scatter Plot
@@ -160,8 +173,25 @@ richness_df %>%
   leaflet() %>%
       addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
       addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+      addWMSTiles(
+        baseUrl = landuse_map_url,
+        layers = landuse_map_layer,
+        options = WMSTileOptions(
+          format = "image/png",
+          transparent = TRUE
+        ),
+        group = "Land Use",
+        attribution = landuse_map_attribute
+      )%>%
+   
+      addControl(
+        html = landuse_legend_image_html, 
+        position = "bottomleft"
+        )%>%
+      
+      
       addLayersControl(
-        baseGroups = c("Base", "Satellite"),
+        baseGroups = c("Base", "Satellite","Land Use"),
         options = layersControlOptions(collapsed = FALSE)
       )%>%
       addCircleMarkers(
@@ -171,7 +201,10 @@ richness_df %>%
         weight = 1,
         fillColor = ~pal(unique_species_count),
         fillOpacity = 0.8,
-        radius = 3
+        radius = 5,
+        popup = ~paste0(
+            "<b>Unique Species Number:</b> ", unique_species_count
+            )
       ) %>%
       addLegend(
         "bottomright",
@@ -184,42 +217,6 @@ richness_df %>%
 ```
 
 
-### Genus Abundance Map
-
-```{r}
-abundance_df_genus %>%
-  filter(taxonGenus %in% c("Acacia")) %>%
-  {
-    pal <- colorNumeric(
-      palette = "Reds",
-      domain = .$abundance   # only filtered categories
-    )
-    leaflet(.) %>%
-      addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-      addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-      addLayersControl(
-        baseGroups = c("Base", "Satellite"),
-        options = layersControlOptions(collapsed = FALSE)
-      )%>%
-      addCircleMarkers(
-        lng = ~longitude_Degree,
-        lat = ~latitude_Degree,
-        radius = 3,
-        fillColor = ~pal(abundance),
-        color = "black",
-        weight = 1,
-        fillOpacity = 0.8
-      )%>%
-      addLegend(
-          "bottomright",
-          pal = pal,
-          values = ~abundance,
-          title = "Genus Abundance",
-        opacity = 1
-      )
-}
-
-```
 
 ### Genus distribution Map
 
@@ -235,16 +232,35 @@ abundance_df_genus %>%
     leaflet(.) %>%
       addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
       addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+      addWMSTiles(
+            baseUrl = landuse_map_url,
+            layers = landuse_map_layer,
+            options = WMSTileOptions(
+              format = "image/png",
+              transparent = TRUE
+            ),
+            group = "Land Use",
+            attribution = landuse_map_attribute
+          )%>%
+       
+      addControl(
+        html = landuse_legend_image_html, 
+        position = "bottomleft"
+        )%>%
       addLayersControl(
-        baseGroups = c("Base", "Satellite"),
+        baseGroups = c("Base", "Satellite","Land Use"),
         options = layersControlOptions(collapsed = FALSE)
       )%>%
-      addCircles(
+      addCircleMarkers(
         lng = ~longitude_Degree,
         lat = ~latitude_Degree,
-        radius = 2,
+        radius = ~abundance/30,
         color = ~pal(taxonGenus),
-        fillOpacity = 0.5
+        fillOpacity = 0.5,
+        popup = ~paste0(
+            "<b>Taxon Name:</b> ", taxonGenus,
+            "<br><b>Abundance:</b> ", abundance
+            )
       )%>%
       addLegend(
           "bottomright",
