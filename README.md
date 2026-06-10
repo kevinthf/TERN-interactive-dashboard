@@ -14,7 +14,7 @@ The Data_preprocessing R script mainly conducting data cleaning and summarizing 
 The R markdown files present basic flexdashboard and interactive shiny dashboard.
 
 Flexdashboard provide a static html file that can be easily embedded on website or shared.
-https://kevinthf.github.io/TERN-interactive-dashboard/
+https://kevinthf.github.io/TERN-interactive-dashboard-showcase/
 
 Shiny version creates interactve interface which is friendly for user to explore the datasset. 
 
