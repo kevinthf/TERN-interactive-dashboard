@@ -1,11 +1,10 @@
 # TERN interactive dashboard
 Developing educational product to enhance the data accessibility to students or target audience.
 ## Data Source
-The datasets were acquired from the TERN EcoPlots platform, which hosts a wide range of environmental and ecological data. 
-https://ecoplots.tern.org.au/
+The datasets were acquired from the [TERN EcoPlots](https://ecoplots.tern.org.au/) platform, which hosts a wide range of environmental and ecological data. 
 
-The following link provides detail procedure to download the raw data from TERN EcoPlots.
-https://ternaus.atlassian.net/wiki/spaces/TERNSup/pages/2682323095/Downloading+Data+in+EcoPlots
+
+The detailed procedure for downloading raw data from TERN EcoPlots can be found [here](https://ternaus.atlassian.net/wiki/spaces/TERNSup/pages/2682323095/Downloading+Data+in+EcoPlots).
 
 Here we use three datasets including "plant occurence", "weather" and "soil profile" to conduct following process and visualisation.
 ## Data Cleaning
