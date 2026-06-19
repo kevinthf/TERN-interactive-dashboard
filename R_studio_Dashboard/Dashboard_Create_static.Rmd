@@ -1,5 +1,5 @@
 ---
-title: "My Dashboard"
+title: "Species Richness Overview"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
@@ -15,6 +15,7 @@ output:
 # install.packages("DT")
 # install.packages("ggplot2")
 # install.packages("ggpmisc")
+# install.packages("ggrepel")
 # install.packages("leaflet")
 #######################################################
 
@@ -23,8 +24,10 @@ library(flexdashboard)
 library(dplyr)
 library(ggplot2)
 library(ggpmisc)
+library(ggrepel)
 library(DT)
 library(leaflet)
+
 
 # Import csv processed data-set
 
@@ -49,90 +52,239 @@ landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_le
 
 ```
 
+
+PCA
+=======================================================================
+
+Column {.tabset}
+-----------------------------------------------------------------------
+
+
+### PCA
+
+
+```{r}
+
+df_pca <- join_df_rich %>%
+  select(stateCode,
+         unique_species_count,
+         precipitationAnnualMean_millimetre,
+         solarRadiationMean_megajoulePerSquareMetre,
+         temperatureAnnualMean_degreeCelsius,
+         average_soil_pH_unitless,
+         average_soil_EC_dSPerMetre) %>%
+  na.omit()
+
+
+df_pca <- df_pca %>%
+  rename(precipitation = precipitationAnnualMean_millimetre ,
+         solarRadiation = solarRadiationMean_megajoulePerSquareMetre,
+         temperatureMean = temperatureAnnualMean_degreeCelsius,
+         soilPH = average_soil_pH_unitless,
+         soilEC = average_soil_EC_dSPerMetre)
+
+pca_model <- prcomp(
+  df_pca %>% select(where(is.numeric)) %>%
+  select(-unique_species_count), 
+  scale. = TRUE)
+
+scores <- as.data.frame(pca_model$x) %>%
+  bind_cols(df_pca %>% select(stateCode, unique_species_count))
+loadings <- as.data.frame(pca_model$rotation) %>%
+  mutate(variable = rownames(.))
+arrow_scale <- 2
+loadings <- loadings %>%
+  mutate(
+    PC1 = PC1 * arrow_scale,
+    PC2 = PC2 * arrow_scale
+  )
+
+var_explained <- pca_model$sdev^2 / sum(pca_model$sdev^2)
+pc1_lab <- paste0("PC1 (", round(var_explained[1] * 100, 1), "%)")
+pc2_lab <- paste0("PC2 (", round(var_explained[2] * 100, 1), "%)")
+
+ggplot(scores, aes(PC1, PC2)) +
+
+  # points colored by state
+  geom_point(aes(fill = stateCode,
+                  size = unique_species_count),
+             shape = 21,
+             color = "black",
+             stroke = 0.3,
+             alpha = 0.4) +
+
+  # variable arrows
+  geom_segment(data = loadings,
+               aes(x = 0, y = 0, xend = PC1, yend = PC2),
+               arrow = arrow(length = unit(0.2, "cm")),
+               inherit.aes = FALSE,
+               color = "red",
+               linewidth = 1.5) +
+
+  # variable labels
+    geom_label_repel(
+    data = loadings,
+    aes(x = PC1, y = PC2, label = variable),
+    inherit.aes = FALSE,
+    fill = "white",
+    color = "black",
+    label.size = 0.2,   # border thickness
+    alpha = 0.9,
+    box.padding = 0.3,
+    point.padding = 0.2
+  ) +
+
+  theme_minimal() +
+  labs(x = pc1_lab,
+    y = pc2_lab,color = "State", size = "Richness")
+
+
+```
+
+
 Scatter Plot
 =======================================================================
 
 Column {.tabset}
 -----------------------------------------------------------------------
 
-### Genus Abundance in QLD
 
-```{r}
-join_df_ab_genus %>%
-  filter(stateCode %in% "QD"&
-          taxonGenus %in% c("Acacia", "Eucalyptus")) %>%
-  ggplot(aes(x = average_soil_pH_unitless, 
-             y = abundance,
-              color = taxonGenus)) +
-  geom_point()+
-  geom_smooth(method = "lm", se = FALSE)+
-  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~"),color=taxonGenus),
-               formula = y ~ x,
-               parse = TRUE)
-
-```
-
-### Species Richness in QLD 
+### Precipitation
 
 
 ```{r}
 join_df_rich %>%
-  filter(stateCode %in% "QD") %>%
   ggplot(aes(x = precipitationAnnualMean_millimetre, 
              y = unique_species_count)) +
   geom_point()+
   geom_smooth(method = "lm", se = FALSE)+
-  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")),
-               formula = y ~ x,
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
                parse = TRUE,
-               label.x = 5,
-               label.y = 15)
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
 
 ```
 
 
-Violin Box plot
+### Solar Radiation
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = solarRadiationMean_megajoulePerSquareMetre, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+
+### Max Temperature
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = maximumTemperature_degreeCelsius, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+
+### Min Temperature
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = minimumTemperature_degreeCelsius, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+### Mean Temperature
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = temperatureAnnualMean_degreeCelsius, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+### Soil pH
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = average_soil_pH_unitless, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+
+### Soil electric conductivity
+
+
+```{r}
+join_df_rich %>%
+  ggplot(aes(x = average_soil_EC_dSPerMetre, 
+             y = unique_species_count)) +
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE)+
+  stat_poly_eq(aes(label = after_stat(paste(rr.label))),
+               parse = TRUE,
+              label.x = "right",
+              label.y = "top")+
+  facet_wrap(~ stateCode)
+
+```
+
+
+
+Soil Texture
 =======================================================================
 
 Column {.tabset}
 -----------------------------------------------------------------------
 
-### Genus Abundance vs. soil texture  in QLD
-
-```{r}
-join_df_ab_genus %>%
-  filter(stateCode %in% "QD"&
-    soil_texture_Grade %in% c("Sand", "Clay loam") &
-         taxonGenus %in% c("Acacia"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = abundance,
-              color = taxonGenus)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-
-### Genus Abundance vs. climate  in QLD
-
-```{r}
-join_df_ab_genus %>%
-  filter(!is.na(climaticCondition) &
-           stateCode %in% "QD"&
-         taxonGenus %in% c("Acacia"))%>%
-  ggplot(aes(x = climaticCondition, 
-             y = abundance,
-              color = taxonGenus)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-
-### Species Richness vs. soil texture  in QLD
+### Whole
 
 ```{r}
 join_df_rich %>%
-  filter(stateCode %in% "QD"&
-           soil_texture_Grade %in% c("Sand", "Clay loam"))%>%
+  filter(soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
   ggplot(aes(x = soil_texture_Grade, 
              y = unique_species_count)) +
   geom_violin(fill = "lightgray") +
@@ -140,13 +292,86 @@ join_df_rich %>%
 ```
 
 
-### Species Richness vs. climate  in QLD
+### QLD
 
 ```{r}
 join_df_rich %>%
   filter(stateCode %in% "QD"&
-           !is.na(climaticCondition))%>%
-  ggplot(aes(x = climaticCondition, 
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+### NSW
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "NS"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+### VIC
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "VC"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+### SA
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "SA"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+### WA
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "WA"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+### NT
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "NT"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+```
+
+
+### TAS
+
+```{r}
+join_df_rich %>%
+  filter(stateCode %in% "TC"&
+           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  ggplot(aes(x = soil_texture_Grade, 
              y = unique_species_count)) +
   geom_violin(fill = "lightgray") +
   geom_boxplot(width = 0.1,outlier.colour = "red")
@@ -191,7 +416,7 @@ richness_df %>%
       
       
       addLayersControl(
-        baseGroups = c("Base", "Satellite","Land Use"),
+        baseGroups = c("Land Use","Base", "Satellite"),
         options = layersControlOptions(collapsed = FALSE)
       )%>%
       addCircleMarkers(
@@ -213,62 +438,6 @@ richness_df %>%
         title = "Species Richness(unique count)",
         opacity = 1)
 
-
-```
-
-
-
-### Genus distribution Map
-
-```{r}
-
-abundance_df_genus %>%
-  filter(taxonGenus %in% c("Acacia", "Eucalyptus")) %>%
-  {
-    pal <- colorFactor(
-      palette = c("blue", "red"),
-      domain = .$taxonGenus   # only filtered categories
-    )
-    leaflet(.) %>%
-      addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
-      addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
-      addWMSTiles(
-            baseUrl = landuse_map_url,
-            layers = landuse_map_layer,
-            options = WMSTileOptions(
-              format = "image/png",
-              transparent = TRUE
-            ),
-            group = "Land Use",
-            attribution = landuse_map_attribute
-          )%>%
-       
-      addControl(
-        html = landuse_legend_image_html, 
-        position = "bottomleft"
-        )%>%
-      addLayersControl(
-        baseGroups = c("Base", "Satellite","Land Use"),
-        options = layersControlOptions(collapsed = FALSE)
-      )%>%
-      addCircleMarkers(
-        lng = ~longitude_Degree,
-        lat = ~latitude_Degree,
-        radius = ~abundance/30,
-        color = ~pal(taxonGenus),
-        fillOpacity = 0.5,
-        popup = ~paste0(
-            "<b>Taxon Name:</b> ", taxonGenus,
-            "<br><b>Abundance:</b> ", abundance
-            )
-      )%>%
-      addLegend(
-          "bottomright",
-          pal = pal,
-          values = ~taxonGenus,
-          title = "Genus"
-      )
-}
 
 ```
 
