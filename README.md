@@ -17,7 +17,7 @@ By leveraging this rich and valuable resource, we can explore the data and uncov
 
 The datasets were acquired from the [TERN EcoPlots](https://ecoplots.tern.org.au/) platform, which hosts a wide range of environmental and ecological data. 
 
-The detailed procedure for downloading raw data from TERN EcoPlots can be found [here](https://ternaus.atlassian.net/wiki/spaces/TERNSup/pages/2682323095/Downloading+Data+in+EcoPlots).
+The detailed procedure for downloading raw data from TERN EcoPlots can be found [here](https://ternaus.atlassian.net/wiki/spaces/TERNSup/pages/2330394627/TERN+EcoPlots+User+Guide).
 
 
 
