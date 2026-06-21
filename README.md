@@ -12,7 +12,7 @@ You can download the complete project by clicking Code and then Download ZIP, as
 
 
 ## Data Source
-TERN is a research team that measures key terrestrial ecosystem attributes over time and stores these valuable observations in its database.
+TERN is a research team that measures key terrestrial ecosystem attributes in Australia over time and stores these valuable observations in its database.
 By leveraging this rich and valuable resource, we can explore the data and uncover interesting patterns, trends, and insights from the raw datasets.
 
 The datasets were acquired from the [TERN EcoPlots](https://ecoplots.tern.org.au/) platform, which hosts a wide range of environmental and ecological data. 
@@ -72,6 +72,9 @@ The map provides three layers for you to switch.
 1. Land use Map in Australia.
 2. Base map.
 3. Satellite image.
+
+For example, what patterns can you identify when comparing the abundance of **_Eucalyptus obliqua_** and **_Triodia basedowii_** with precipitation on a scatter plot? Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
+
 
 Have fun to explore and try if you can find some interesting facts.
 
