@@ -1,8 +1,19 @@
 # TERN interactive dashboard
-Developing educational product to enhance the data accessibility to students or target audience.
-## Data Source
-The datasets were acquired from the [TERN EcoPlots](https://ecoplots.tern.org.au/) platform, which hosts a wide range of environmental and ecological data. 
+Hello World!
 
+This repository contains the R scripts and Markdown files used to demonstrate and explore data collected from TERN. The project aims to improve data accessibility and understanding for students and other target audiences.
+
+You can download the complete project by clicking Code and then Download ZIP, as shown in the image below.
+
+![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/001.png)
+
+
+
+## Data Source
+TERN is a research team that measures key terrestrial ecosystem attributes over time and stores these valuable observations in its database.
+By leveraging this rich and valuable resource, we can explore the data and uncover interesting patterns, trends, and insights from the raw datasets.
+
+The datasets were acquired from the [TERN EcoPlots](https://ecoplots.tern.org.au/) platform, which hosts a wide range of environmental and ecological data. 
 
 The detailed procedure for downloading raw data from TERN EcoPlots can be found [here](https://ternaus.atlassian.net/wiki/spaces/TERNSup/pages/2682323095/Downloading+Data+in+EcoPlots).
 
