@@ -33,7 +33,7 @@ The "Dashboard_Create_static" file present basic flexdashboard.
 
 Flexdashboard provide a static html file that can be easily embedded on website or shared.
 
-You can click [here](https://kevinthf.github.io/TERN-interactive-dashboard-showcase/) to see how it looks like.
+You can click [Species Richness Overview](https://kevinthf.github.io/TERN-interactive-dashboard-showcase/) to see how it looks like.
 
 The only downside is that it doesn't offer many opportunities for interaction, which can make the experience feel a little less fun.
 
