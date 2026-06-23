@@ -2,7 +2,7 @@
 title: "Species Richness Overview"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     vertical_layout: fill
     logo: image_logo.png
     self_contained: true
@@ -31,11 +31,9 @@ library(leaflet)
 
 # Import csv processed data-set
 
-join_df_ab_genus <-read.csv("processed_data/join_df_ab_genus.csv", header = TRUE, stringsAsFactors = FALSE)
+join_df_ab_species <-read.csv("processed_data/join_df_ab_species.csv", header = TRUE, stringsAsFactors = FALSE)
 join_df_rich <-read.csv("processed_data/join_df_rich.csv", header = TRUE, stringsAsFactors = FALSE)
-richness_df <-read.csv("processed_data/richness_df.csv", header = TRUE, stringsAsFactors = FALSE)
-abundance_df_genus <-read.csv("processed_data/abundance_df_genus.csv", header = TRUE, stringsAsFactors = FALSE)
-
+species_interest <-read.csv("Description_data/Species_interest.csv", header = TRUE, stringsAsFactors = FALSE)
 
 # External Variable
 
@@ -53,10 +51,10 @@ landuse_legend_image_html <-paste0("<h5>Land Use Type</h5><img src='",landuse_le
 ```
 
 
-PCA
+Overview
 =======================================================================
 
-Column {.tabset}
+Row {.tabset}
 -----------------------------------------------------------------------
 
 
@@ -136,16 +134,28 @@ ggplot(scores, aes(PC1, PC2)) +
 
   theme_minimal() +
   labs(x = pc1_lab,
-    y = pc2_lab,color = "State", size = "Richness")
+    y = pc2_lab,fill = "State", size = "Richness")
 
 
 ```
 
+### Box plot
 
-Scatter Plot
+```{r}
+
+join_df_rich %>%
+  ggplot(aes(x = stateCode, 
+             y = unique_species_count)) +
+  geom_violin(fill = "lightgray") +
+  geom_boxplot(width = 0.1,outlier.colour = "red")
+
+
+```
+
+Variables Detail
 =======================================================================
 
-Column {.tabset}
+Row {.tabset}
 -----------------------------------------------------------------------
 
 
@@ -273,116 +283,38 @@ join_df_rich %>%
 ```
 
 
+### Soil Texture
 
-Soil Texture
-=======================================================================
-
-Column {.tabset}
------------------------------------------------------------------------
-
-### Whole
 
 ```{r}
 join_df_rich %>%
-  filter(soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
+  filter(soil_texture_Grade %in% c("Sand",
+                                   "Clay loam", 
+                                   "Loam",
+                                   "Loamy sand",
+                                   "Medium clay",
+                                   "Light clay",
+                                   "Sandy clay loam",
+                                   "Sandy loam"))%>%
   ggplot(aes(x = soil_texture_Grade, 
              y = unique_species_count)) +
   geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
+  geom_boxplot(width = 0.1,outlier.colour = "red")+
+  theme(
+    axis.text.x = element_text(angle = 60, hjust = 1)
+  )+
+  facet_wrap(~ stateCode)
+
 ```
 
 
-### QLD
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "QD"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-### NSW
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "NS"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-### VIC
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "VC"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-### SA
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "SA"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-### WA
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "WA"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-### NT
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "NT"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
 
 
-### TAS
-
-```{r}
-join_df_rich %>%
-  filter(stateCode %in% "TC"&
-           soil_texture_Grade %in% c("Sand","Clay loam", "Loam","Loamy sand","Heavy clay"))%>%
-  ggplot(aes(x = soil_texture_Grade, 
-             y = unique_species_count)) +
-  geom_violin(fill = "lightgray") +
-  geom_boxplot(width = 0.1,outlier.colour = "red")
-```
-
-
-Interactive Map
+Map and Tables
 =======================================================================
 
 
-Column {.tabset}
+Row {.tabset}
 -----------------------------------------------------------------------
 
 ### Species Richness Map
@@ -390,10 +322,10 @@ Column {.tabset}
 ```{r}
 pal <- colorNumeric(
   palette = "Reds",   # light → dark
-  domain = richness_df$unique_species_count
+  domain = join_df_rich$unique_species_count
 )
 
-richness_df %>%
+join_df_rich %>%
   filter(!is.na(unique_species_count))%>%
   leaflet() %>%
       addProviderTiles("Esri.WorldStreetMap", group = "Base") %>%
@@ -428,7 +360,14 @@ richness_df %>%
         fillOpacity = 0.8,
         radius = 5,
         popup = ~paste0(
-            "<b>Unique Species Number:</b> ", unique_species_count
+            "<b>Site Name:</b> ", siteName,
+            "<br><b>Unique Species Number:</b> ", unique_species_count,
+            "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+            "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+            "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+            "<br><b>Soil pH:</b> ", average_soil_pH_unitless,
+            "<br><b>Soil EC(dS/m):</b> ", average_soil_EC_dSPerMetre,
+            "<br><b>Soil texture:</b> ", soil_texture_Grade
             )
       ) %>%
       addLegend(
@@ -441,3 +380,41 @@ richness_df %>%
 
 ```
 
+
+### Sites detail
+
+```{r}
+df <- join_df_ab_species %>%
+    select(siteName, 
+           siteVisitStartDate,
+           taxonFamily,
+           taxonGenus,
+           scientificName,
+           abundance)
+    
+    datatable(df, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+
+
+```
+
+
+### Species Brief Description
+
+```{r}
+df_2 <- species_interest %>%
+    select(Species, 
+           common_name,
+           Likely_Affinity,
+           distribution,
+           Reference_link)
+    
+    datatable(df_2, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+
+
+```
