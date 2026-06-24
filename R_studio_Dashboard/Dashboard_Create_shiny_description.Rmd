@@ -39,7 +39,7 @@ family_interest <-read.csv("Description_data/Family_interest.csv", header = TRUE
 species_interest <-read.csv("Description_data/Species_interest.csv", header = TRUE, stringsAsFactors = FALSE)
 
 #Input vector
-states <- c("NS","NT","QD","SA","TC","VC","WA")
+states <- c("NSW","NT","QLD","SA","TAS","VIC","WA")
 
 env <-c("precipitationAnnualMean_millimetre",
         "solarRadiationMean_megajoulePerSquareMetre",

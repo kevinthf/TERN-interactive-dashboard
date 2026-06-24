@@ -19,6 +19,18 @@ plant_species_data$taxonGenus <- sub(" .*", "", plant_species_data$scientificNam
 # Extract state code from site-Name
 plant_species_data$stateCode <- substr(plant_species_data$siteName,1,2)
 
+# Recode state code
+plant_species_data <- plant_species_data %>%
+  mutate(
+    stateCode = recode(
+      stateCode,
+      "NS" = "NSW",
+      "QD" = "QLD",
+      "TC" = "TAS",
+      "VC" = "VIC"
+    )
+  )
+
 
 
 # Since multiple soil data for same date of single site location (unique ID with multiple value)
