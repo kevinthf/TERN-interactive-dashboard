@@ -82,13 +82,13 @@ The map provides three layers for you to switch.
 3. Satellite image.
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/0083.png)
 
-If you’re interested in any surveyed site, you can click on a point to see its details pop up. Let's take "QDABBS0010" as example.
+If you’re interested in any surveyed site, you can click on a point to see its details pop up. Let's take "QDABBS0010" as example. <br/>
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/014.png)
 
 Copy the site name, go to the “Sites Detail” tab, and paste it into the search box to browse the recorded species and their abundance.
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/015.png)
 
-After arranging the species in ascending order of abundance, which species is the most dominant in this site?
+After arranging the species in ascending order of abundance, which species is the most dominant in this site? Can you describe what this species looks like?<br/>
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/016.png)
 
 #### Quick acitvity
