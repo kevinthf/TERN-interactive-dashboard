@@ -42,10 +42,10 @@ The three datasets are then joined to investigate the relationships and correlat
 
 If you are interested, you can also download other datasets from the [TERN EcoPlots](https://ecoplots.tern.org.au/) and modify the code to generate other datasets.<br/> Make sure they are saved in the rawdata folder to conduct the template data preprocessing.
 
-You are welcome to use the cleaned dataset that have already saved in the "processed_data" folder.
-
-
-**Those are the key files required to generate and display the dashboards. Please ensure they are stored in the correct folder and that their filenames remain unchanged.** 
+🔴**This step is not required if you feel too overwhelmed.** <br/>
+🔴**You are welcome to use the cleaned dataset already saved in the "processed_data" folder for the subsequent visualisation.**<br/>
+🔴**Those are the key files required to generate and display the dashboards.** <br/>
+🔴**Please ensure they are stored in the correct folder and that their filenames remain unchanged.** 
 
 ## Static Dashboard
 The **"Dashboard_Create_static"** file present basic flexdashboard. Flexdashboard provide a static html file that can be easily embedded on website or shared.
@@ -92,7 +92,7 @@ After arranging the species in ascending order of abundance, which species is th
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/016.png)
 
 #### Quick acitvity
-Now, examine the other surveyed site with a different land use, habitat, or state. Are the dominant species the same?
+🟢 Now, examine the other surveyed site with a different land use, habitat, or state. Are the dominant species the same?
 
 ## Interactive Dashboard
 The only downside of the static version is that it doesn't offer many opportunities for interaction, which can make the experience feel a little less fun.
@@ -112,7 +112,8 @@ If you are not familiar with those species scientific name, **"Dashboard_Create_
 
 
 #### Quick acitvity
-What patterns can you identify when comparing the abundance of **_Eucalyptus obliqua_** and **_Triodia basedowii_** with precipitation on a scatter plot? Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
+🟢 What patterns can you identify when comparing the abundance of **_Eucalyptus obliqua_** and **_Triodia basedowii_** with precipitation on a scatter plot? <br/>
+🟢 Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
 
 
 Have fun to explore and try if you can find some interesting facts.
