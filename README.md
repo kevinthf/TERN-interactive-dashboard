@@ -88,10 +88,10 @@ If you’re interested in any surveyed site, you can click on a point to see its
 Copy the site name, go to the “Sites Detail” tab, and paste it into the search box to browse the recorded species and their abundance.
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/015.png)
 
-After arranging the species in ascending order of abundance, which species is the most dominant in this site? Can you describe what this species looks like?<br/>
+After arranging the species in descending order of abundance, which species is the most dominant in this site? Can you describe what this species looks like?<br/>
 ![oops, it seems the image has gone :(](https://github.com/kevinthf/TERN-interactive-dashboard-showcase/blob/main/tutorial_image/016.png)
 
-#### Quick acitvity
+#### Quick acitvity 1
 🟢 Now, examine the other surveyed site with a different land use, habitat, or state. Are the dominant species the same?
 
 ## Interactive Dashboard
@@ -111,7 +111,7 @@ If you are not familiar with those species scientific name, **"Dashboard_Create_
 
 
 
-#### Quick acitvity
+#### Quick acitvity 2
 🟢 What patterns can you identify when comparing the abundance of **_Eucalyptus obliqua_** and **_Triodia basedowii_** with precipitation on a scatter plot? <br/>
 🟢 Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
 
