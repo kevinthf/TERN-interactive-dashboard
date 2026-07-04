@@ -132,6 +132,9 @@ Or in Family level,
 🟢 What patterns can you identify when comparing the abundance of **_Eucalyptus obliqua_** and **_Triodia basedowii_** with precipitation on a scatter plot? <br/>
 🟢 Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
 
+#### Quick acitvity 3
+🟢 Now, switch to the Genus level and choose any genus you are interested in, select All States. After that, select QLD only. Observe the changes in the scatter plot. Can you explain why this is happening?
+
 
 Have fun to explore and try if you can find some interesting facts.
 
