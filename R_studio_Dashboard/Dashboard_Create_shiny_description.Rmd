@@ -1,5 +1,5 @@
 ---
-title: "My Dashboard"
+title: "TERN Interactive Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -41,27 +41,22 @@ species_interest <-read.csv("Description_data/Species_interest.csv", header = TR
 #Input vector
 states <- c("NSW","NT","QLD","SA","TAS","VIC","WA")
 
-env <-c("precipitationAnnualMean_millimetre",
-        "solarRadiationMean_megajoulePerSquareMetre",
-        "maximumTemperature_degreeCelsius",
-        "minimumTemperature_degreeCelsius",
-        "temperatureAnnualMean_degreeCelsius",
-        "average_soil_pH_unitless",
-        "average_soil_EC_dSPerMetre")
+env <-c("Precipitation" ="precipitationAnnualMean_millimetre",
+        "Solar Radiation" ="solarRadiationMean_megajoulePerSquareMetre",
+        "Max Temperature" = "maximumTemperature_degreeCelsius",
+        "Min Temperature" ="minimumTemperature_degreeCelsius",
+        "Average Temperature" ="temperatureAnnualMean_degreeCelsius",
+        "Soil pH" ="average_soil_pH_unitless",
+        "Soil EC" ="average_soil_EC_dSPerMetre")
 
-soil <- c("Clay loam",
-          "Clay loam sandy ",
-          "Clayey sand",
-          "Heavy clay",
-          "Light clay",
-          "Light medium clay",
-          "Loam",
-          "Loamy sand",
-          "Medium clay",
-          "Medium heavy clay",
-          "Sand",
-          "Sandy clay loam",
-          "Sandy loam")
+soil <- c("Sand",
+          "Clay loam", 
+           "Loam",
+           "Loamy sand",
+           "Medium clay",
+           "Light clay",
+           "Sandy clay loam",
+           "Sandy loam")
 
 genus <- c("Acacia",
           "Eucalyptus",
@@ -362,7 +357,13 @@ renderLeaflet({
             color = ~pal(taxonGenus),
             popup = ~paste0(
                 "<b>Taxon Name:</b> ", taxonGenus,
-                "<br><b>Abundance:</b> ", abundance
+                "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                 )
           )%>%
           addLegend(
@@ -413,7 +414,13 @@ renderLeaflet({
               color = ~pal(taxonFamily),
               popup = ~paste0(
                   "<b>Taxon Name:</b> ", taxonFamily,
-                  "<br><b>Abundance:</b> ", abundance
+                  "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                   )
             )%>%
             addLegend(
@@ -463,7 +470,13 @@ renderLeaflet({
               color = ~pal(scientificName),
               popup = ~paste0(
                   "<b>Taxon Name:</b> ", scientificName,
-                  "<br><b>Abundance:</b> ", abundance
+                  "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                   )
             )%>%
             addLegend(

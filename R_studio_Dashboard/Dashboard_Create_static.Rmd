@@ -365,8 +365,8 @@ join_df_rich %>%
             "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
             "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
             "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
-            "<br><b>Soil pH:</b> ", average_soil_pH_unitless,
-            "<br><b>Soil EC(dS/m):</b> ", average_soil_EC_dSPerMetre,
+            "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+            "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
             "<br><b>Soil texture:</b> ", soil_texture_Grade
             )
       ) %>%
@@ -401,20 +401,4 @@ df <- join_df_ab_species %>%
 ```
 
 
-### Species Brief Description
 
-```{r}
-df_2 <- species_interest %>%
-    select(Species, 
-           common_name,
-           Likely_Affinity,
-           distribution,
-           Reference_link)
-    
-    datatable(df_2, 
-              options = list(scrollX = TRUE),
-              rownames = FALSE,
-              class = "stripe hover compact")
-
-
-```

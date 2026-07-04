@@ -1,5 +1,5 @@
 ---
-title: "My Dashboard"
+title: "TERN Interactive Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
@@ -41,27 +41,22 @@ species_interest <-read.csv("Description_data/Species_interest.csv", header = TR
 #Input vector
 states <- c("NSW","NT","QLD","SA","TAS","VIC","WA")
 
-env <-c("precipitationAnnualMean_millimetre",
-        "solarRadiationMean_megajoulePerSquareMetre",
-        "maximumTemperature_degreeCelsius",
-        "minimumTemperature_degreeCelsius",
-        "temperatureAnnualMean_degreeCelsius",
-        "average_soil_pH_unitless",
-        "average_soil_EC_dSPerMetre")
+env <-c("Precipitation" ="precipitationAnnualMean_millimetre",
+        "Solar Radiation" ="solarRadiationMean_megajoulePerSquareMetre",
+        "Max Temperature" = "maximumTemperature_degreeCelsius",
+        "Min Temperature" ="minimumTemperature_degreeCelsius",
+        "Average Temperature" ="temperatureAnnualMean_degreeCelsius",
+        "Soil pH" ="average_soil_pH_unitless",
+        "Soil EC" ="average_soil_EC_dSPerMetre")
 
-soil <- c("Clay loam",
-          "Clay loam sandy ",
-          "Clayey sand",
-          "Heavy clay",
-          "Light clay",
-          "Light medium clay",
-          "Loam",
-          "Loamy sand",
-          "Medium clay",
-          "Medium heavy clay",
-          "Sand",
-          "Sandy clay loam",
-          "Sandy loam")
+soil <- c("Sand",
+          "Clay loam", 
+           "Loam",
+           "Loamy sand",
+           "Medium clay",
+           "Light clay",
+           "Sandy clay loam",
+           "Sandy loam")
 
 genus <- c("Acacia",
           "Eucalyptus",
@@ -117,7 +112,7 @@ Column {.sidebar}
 radioButtons("taxon_var_1", 
             label= "Choose taxonomic rank:",
             choices = c("Family","Genus","Species"),
-            selected = "Genus")
+            selected = "Species")
 
 # dynamic input
 uiOutput("dynamic_input_1")
@@ -137,7 +132,7 @@ selectInput("env_var_1",
 selectInput("soil_var_1", 
             label= "Choose soil texture Grade:",
             choices = soil,
-            selected = c(soil[1],soil[7]),
+            selected = c(soil[1],soil[3],soil[6]),
             multiple = TRUE)
 
 selectInput("map_var_1", 
@@ -312,9 +307,6 @@ renderPlot({
 
 
 
-
-
-
 ### Taxon distribution Map
 
 ```{r}
@@ -360,11 +352,17 @@ renderLeaflet({
           addCircleMarkers(
             lng = ~longitude_Degree,
             lat = ~latitude_Degree,
-            radius = ~abundance/30,
+            radius = ~abundance/50,
             color = ~pal(taxonGenus),
             popup = ~paste0(
                 "<b>Taxon Name:</b> ", taxonGenus,
-                "<br><b>Abundance:</b> ", abundance
+                "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                 )
           )%>%
           addLegend(
@@ -415,7 +413,13 @@ renderLeaflet({
               color = ~pal(taxonFamily),
               popup = ~paste0(
                   "<b>Taxon Name:</b> ", taxonFamily,
-                  "<br><b>Abundance:</b> ", abundance
+                  "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                   )
             )%>%
             addLegend(
@@ -465,7 +469,13 @@ renderLeaflet({
               color = ~pal(scientificName),
               popup = ~paste0(
                   "<b>Taxon Name:</b> ", scientificName,
-                  "<br><b>Abundance:</b> ", abundance
+                  "<br><b>Abundance:</b> ", abundance,
+                "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
+                "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
+                "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
+                "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+                "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
+                "<br><b>Soil texture:</b> ", soil_texture_Grade
                   )
             )%>%
             addLegend(
@@ -484,7 +494,49 @@ renderLeaflet({
 ```
 
 
+### Taxom Brief Description
 
+```{r}
+
+renderDataTable({
+  switch(input$taxon_var_1,
+         
+  "Family"={
+    df <- family_interest %>%
+    select(Family_Scientific, 
+           Family_Common,
+           General_characteristics_Australia_focused,
+           Rainforest_species_present.,
+           Key_references)
+    
+    datatable(df, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+    
+  },
+  "Species"={
+    df_2 <- species_interest %>%
+    select(Species, 
+           common_name,
+           Likely_Affinity,
+           distribution,
+           Reference_link)
+    
+    datatable(df_2, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+    
+  }
+  
+  )
+
+  
+})
+
+
+```
 
 
 
@@ -620,15 +672,15 @@ renderLeaflet({
           fillOpacity = 0.8,
           radius = 5,
           popup = ~paste0(
-              "<b>Site Name:</b> ", siteName,
+            "<b>Site Name:</b> ", siteName,
             "<br><b>Unique Species Number:</b> ", unique_species_count,
             "<br><b>Precipitation (mm):</b> ", precipitationAnnualMean_millimetre,
             "<br><b>Solar Radiation(MJ/m²):</b> ", solarRadiationMean_megajoulePerSquareMetre,
             "<br><b>Annual temperature(°C):</b> ", temperatureAnnualMean_degreeCelsius,
-            "<br><b>Soil pH:</b> ", average_soil_pH_unitless,
-            "<br><b>Soil EC(dS/m):</b> ", average_soil_EC_dSPerMetre,
+            "<br><b>Soil pH:</b> ", round(average_soil_pH_unitless,3),
+            "<br><b>Soil EC(dS/m):</b> ", round(average_soil_EC_dSPerMetre,3),
             "<br><b>Soil texture:</b> ", soil_texture_Grade
-              )
+            )
         ) %>%
         addLegend(
           "bottomright",
@@ -640,3 +692,21 @@ renderLeaflet({
 
 ```
 
+### Sites detail
+
+```{r}
+df <- join_df_ab_species %>%
+    select(siteName, 
+           siteVisitStartDate,
+           taxonFamily,
+           taxonGenus,
+           scientificName,
+           abundance)
+    
+    datatable(df, 
+              options = list(scrollX = TRUE),
+              rownames = FALSE,
+              class = "stripe hover compact")
+
+
+```
