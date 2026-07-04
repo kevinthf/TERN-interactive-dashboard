@@ -178,13 +178,13 @@ output$dynamic_input_1 <- renderUI({
     "Species" = tagList(
        
       selectInput("species_var_mult_1", 
-            label= "Choose Multiple Species (Wet Forest)",
+            label= "Choose Multiple Species (A type)",
             choices = wet_species,
             selected= c(wet_species[1]),
             multiple = TRUE
             ),
       selectInput("species_var_mult_2", 
-            label= "Choose Multiple Species (Dry)",
+            label= "Choose Multiple Species (B type)",
             choices = dry_species,
             selected= c(dry_species[1]),
             multiple = TRUE)
