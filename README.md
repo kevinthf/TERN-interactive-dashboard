@@ -1,7 +1,7 @@
 # TERN interactive dashboard
 Hello World!
 
-This repository contains the R scripts and Markdown files used to demonstrate and explore data collected from TERN. The project aims to improve data accessibility and understanding for students and other target audiences.
+This repository contains the R scripts and Markdown files used to demonstrate and explore data collected from TERN, Australia's national ecosystem observatory. The project aims to improve data accessibility and understanding for students and other target audiences.
 
 If you are new to the R language, you can download [R](https://cran.r-project.org/) and [Rstudio](https://posit.co/products/open-source/rstudio) by clicking the links respectively.
 Or, click here to know about [R language](https://rstudio-education.github.io/hopr/starting.html).
