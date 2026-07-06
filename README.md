@@ -3,8 +3,8 @@ Hello World!
 
 This repository contains the R scripts and Markdown files used to demonstrate and explore data collected from TERN, Australia's national ecosystem observatory. The project aims to improve data accessibility and understanding for students and other target audiences.
 
-If you are new to the R language, you can download [R](https://cran.r-project.org/) and [Rstudio](https://posit.co/products/open-source/rstudio) by clicking the links respectively.
-Or, click here to know about [R language](https://rstudio-education.github.io/hopr/starting.html).
+If you are new to the R language, you can download [R](https://cran.r-project.org/) and [RStudio](https://posit.co/products/open-source/rstudio) by clicking the respective links.
+Or, click here to know about the [R language](https://rstudio-education.github.io/hopr/starting.html).
 
 You can download the complete project by clicking Code and then Download ZIP, as shown in the image below.
 
@@ -96,7 +96,7 @@ After arranging the species in descending order of abundance, which species is t
 
 ## Interactive Dashboard
 The only downside of the static version is that it doesn't offer many opportunities for interaction, which can make the experience feel a little less fun.
-If it does not fulfill your curiousity, the **"Dashboard_Create_shiny"** creates interactve interface which is friendly for you to explore the datasset.
+If it does not fulfill your curiousity, the **"Dashboard_Create_shiny"** creates interactve interface which is friendly for you to explore the dataset.
 
 You can click [TERN Interactive Dashboard](https://019f2798-e2f6-1108-d95c-41deb0dee9c9.share.connect.posit.cloud/) to see how it looks like.
 
