@@ -133,9 +133,6 @@ Or in Family level,
 🟢 Do both species respond similarly to rainfall, or do they exhibit different ecological preferences and adaptations?
 🟢 Based on your inference, what do you think is the main difference between the habitats of species A and species B?
 
-#### Quick acitvity 3
-🟢 Now, switch to the Genus level and choose any genus you are interested in, select All States. After that, select QLD only. Observe the changes in the scatter plot. Can you explain why this is happening?
-
 
 Have fun to explore and try if you can find some interesting facts.
 
